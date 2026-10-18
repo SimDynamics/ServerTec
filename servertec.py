@@ -13,7 +13,7 @@ import time
 from collections import OrderedDict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 import httpx
@@ -24,6 +24,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 from starlette.concurrency import run_in_threadpool
+
+from portable_settings import PORTABLE_NAMESPACES, validate_portable_settings
 
 HOUR_MS = 3_600_000
 CAPACITIES = {"programming": 8, "math_physics": 12}
@@ -82,8 +84,26 @@ class Database:
                     item TEXT NOT NULL, completed_ms INTEGER NOT NULL,
                     PRIMARY KEY(uid,kind,course,item));
             """)
-            if con.execute("SELECT version FROM schema_version").fetchall() != [(1,)]:
-                raise RuntimeError("Unsupported database schema; do not overwrite it")
+            con.execute("BEGIN IMMEDIATE")
+            try:
+                versions = con.execute("SELECT version FROM schema_version").fetchall()
+                if versions not in ([(1,)], [(2,)]):
+                    raise RuntimeError("Unsupported database schema; do not overwrite it")
+                if versions == [(1,)]:
+                    # Additive migration; never drop a completed lesson, heart or receipt.
+                    con.execute("""CREATE TABLE IF NOT EXISTS portable_settings(
+                        uid TEXT NOT NULL, namespace TEXT NOT NULL,
+                        values_json TEXT NOT NULL, revision INTEGER NOT NULL,
+                        updated_ms INTEGER NOT NULL,
+                        PRIMARY KEY(uid,namespace), CHECK(revision>0))""")
+                    con.execute("UPDATE schema_version SET version=2 WHERE version=1")
+                elif con.execute("""SELECT 1 FROM sqlite_master
+                                    WHERE type='table' AND name='portable_settings'""").fetchone() is None:
+                    raise RuntimeError("Settings table missing; do not overwrite schema")
+                con.commit()
+            except Exception:
+                con.rollback()
+                raise
         finally:
             con.close()
         self.path.chmod(0o600)
@@ -151,7 +171,7 @@ class Database:
             con.close()
 
     def complete(self, uid: str, kind: str, course: str, item: str):
-        if kind not in {"unit", "course"} or (kind == "course" and item != course):
+        if kind not in {"lesson", "unit", "course"} or (kind == "course" and item != course):
             raise DomainError("invalid_completion", 422)
         con = self.connect()
         try:
@@ -177,6 +197,55 @@ class Database:
             rows = con.execute("SELECT kind,course,item,completed_ms FROM completions WHERE uid=? ORDER BY kind,course,item",
                                (uid,)).fetchall()
             return {"completed": [dict(zip(("kind", "course", "item", "completed_ms"), row)) for row in rows]}
+        finally:
+            con.close()
+
+
+    def settings(self, uid: str):
+        con = self.connect()
+        try:
+            rows = con.execute(
+                "SELECT namespace,values_json,revision,updated_ms FROM portable_settings "
+                "WHERE uid=? ORDER BY namespace", (uid,)).fetchall()
+            return {"settings": [
+                {"namespace": namespace, "values": json.loads(values),
+                 "revision": revision, "updated_ms": updated}
+                for namespace, values, revision, updated in rows
+            ]}
+        finally:
+            con.close()
+
+    def save_settings(self, uid: str, namespace: str, expected_revision: int,
+                      values: dict[str, Any]):
+        try:
+            canonical = validate_portable_settings(namespace, values)
+        except ValueError:
+            raise DomainError("invalid_portable_settings", 422) from None
+        con = self.connect()
+        try:
+            con.execute("BEGIN IMMEDIATE")
+            existing = con.execute(
+                "SELECT values_json,revision,updated_ms FROM portable_settings "
+                "WHERE uid=? AND namespace=?", (uid, namespace)).fetchone()
+            current_revision = existing[1] if existing else 0
+            if current_revision != expected_revision:
+                raise DomainError("settings_revision_conflict", 409)
+            if existing and existing[0] == canonical:
+                updated_ms, next_revision = existing[2], current_revision
+            else:
+                updated_ms, next_revision = int(self.clock()), current_revision + 1
+                con.execute(
+                    "INSERT INTO portable_settings(uid,namespace,values_json,revision,updated_ms) "
+                    "VALUES(?,?,?,?,?) ON CONFLICT(uid,namespace) DO UPDATE SET "
+                    "values_json=excluded.values_json, revision=excluded.revision, "
+                    "updated_ms=excluded.updated_ms",
+                    (uid, namespace, canonical, next_revision, updated_ms))
+            con.commit()
+            return {"namespace": namespace, "values": json.loads(canonical),
+                    "revision": next_revision, "updated_ms": updated_ms}
+        except Exception:
+            con.rollback()
+            raise
         finally:
             con.close()
 
@@ -304,9 +373,15 @@ class Debit(BaseModel):
 
 class Completion(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=False)
-    kind: Literal["unit", "course"]
+    kind: Literal["lesson", "unit", "course"]
     course: str = Field(pattern=r"^[a-zA-Z0-9_-]{1,128}$")
     item: str = Field(pattern=r"^[a-zA-Z0-9_-]{1,128}$")
+
+
+class SettingsUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    expected_revision: int = Field(ge=0)
+    values: dict[str, Any]
 
 
 def create_app(settings: Settings, db: Database | None = None, verifier=None) -> FastAPI:
@@ -381,5 +456,13 @@ def create_app(settings: Settings, db: Database | None = None, verifier=None) ->
     @app.put("/v1/progress/completions")
     def complete(body: Completion, uid: str = Depends(principal)):
         return database.complete(uid, body.kind, body.course, body.item)
+
+    @app.get("/v1/settings")
+    def settings_snapshot(uid: str = Depends(principal)):
+        return database.settings(uid)
+
+    @app.put("/v1/settings/{namespace}")
+    def save_settings(namespace: str, body: SettingsUpdate, uid: str = Depends(principal)):
+        return database.save_settings(uid, namespace, body.expected_revision, body.values)
 
     return app

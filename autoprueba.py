@@ -174,9 +174,21 @@ def run_selfcheck(*, timeout: float = 30.0) -> dict:
                            'course_completion_failed')
                     ensure(len(client.get('/v1/progress').json()['completed']) == 2,
                            'course_progress_missing')
+                    lesson = {'kind': 'lesson', 'course': 'qa_course', 'item': 'qa_lesson'}
+                    ensure(client.put('/v1/progress/completions', json=lesson).status_code == 200,
+                           'lesson_completion_failed')
+                    ensure(len(client.get('/v1/progress').json()['completed']) == 3,
+                           'lesson_progress_missing')
                     ensure(client.put('/v1/progress/completions', json={
-                        **completion, 'kind': 'lesson'}).status_code == 422, 'lesson_sync_accepted')
-                    checks.append('unidades_y_cursos_sin_sincronizar_lecciones')
+                        **completion, 'kind': 'page'}).status_code == 422,
+                           'partial_page_accepted')
+                    portable = {'expected_revision': 0, 'values': {'selection': 'es'}}
+                    saved = client.put('/v1/settings/ui_language_settings', json=portable)
+                    ensure(saved.status_code == 200 and saved.json()['revision'] == 1,
+                           'portable_settings_not_saved')
+                    ensure(client.get('/v1/settings').json()['settings'][0]['values'] ==
+                           {'selection': 'es'}, 'portable_settings_not_restored')
+                    checks.append('completados_y_ajustes_portables_sin_paginas_parciales')
                     fake = client.post('/v1/hearts/debits', json={
                         'operation_id': str(uuid4()), 'route': 'programming', 'premium': True})
                     ensure(fake.status_code == 422, 'fake_premium_accepted')
@@ -207,10 +219,14 @@ def run_selfcheck(*, timeout: float = 30.0) -> dict:
             ensure(con.execute('PRAGMA integrity_check').fetchone()[0] == 'ok', 'database_integrity_failed')
             ensure(con.execute('SELECT COUNT(*) FROM receipts').fetchone()[0] == 1,
                    'persisted_receipt_count_incorrect')
-            ensure(con.execute('SELECT COUNT(*) FROM completions').fetchone()[0] == 2,
+            ensure(con.execute('SELECT COUNT(*) FROM completions').fetchone()[0] == 3,
                    'progress_not_persisted')
         finally:
             con.close()
+        ensure(con is not None, 'database_not_checked')
+        with sqlite3.connect(state / 'servertec.db') as settings_con:
+            ensure(settings_con.execute('SELECT COUNT(*) FROM portable_settings').fetchone()[0] == 1,
+                   'portable_settings_not_persisted')
         ensure(token not in (state / 'qa-server.log').read_text(errors='replace'), 'credential_in_logs')
         checks.append('persistencia_y_sin_credenciales_en_logs')
     # Successful return only after temporary key/database cleanup.

@@ -100,8 +100,11 @@ def test_progress_idempotent_only_unit_or_course(database):
     db.complete('a', 'unit', 'cpp1', 'u1')
     assert len(db.progress('a')['completed']) == 1
     assert db.progress('b') == {'completed': []}
+    assert db.complete('a', 'lesson', 'cpp1', 'l1')['saved']
+    db.complete('a', 'lesson', 'cpp1', 'l1')
+    assert len(db.progress('a')['completed']) == 2
     with pytest.raises(DomainError):
-        db.complete('a', 'lesson', 'cpp1', 'l1')
+        db.complete('a', 'page', 'cpp1', 'p1')
 
 
 def test_sqlite_backup_includes_committed_wal(database, tmp_path):
@@ -153,7 +156,8 @@ def test_oversized_body_rejected(client):
 def test_invalid_completion_and_sql_payload_rejected(client):
     for item in ['../u1', "'; DROP TABLE hearts;--", 'x' * 129]:
         assert client.put('/v1/progress/completions', json={'kind': 'unit', 'course': 'cpp1', 'item': item}).status_code == 422
-    assert client.put('/v1/progress/completions', json={'kind': 'lesson', 'course': 'cpp1', 'item': 'l1'}).status_code == 422
+    assert client.put('/v1/progress/completions', json={'kind': 'page', 'course': 'cpp1', 'item': 'p1'}).status_code == 422
+    assert client.put('/v1/progress/completions', json={'kind': 'lesson', 'course': 'cpp1', 'item': 'l1'}).status_code == 200
     assert client.put('/v1/progress/completions', json={'kind': 'unit', 'course': 'cpp1', 'item': 'u1'}).status_code == 200
 
 
@@ -268,3 +272,106 @@ def test_actual_tls_server_persistence_and_hostname_validation(tmp_path):
             process.wait(timeout=10)
     assert Database(state / 'servertec.db').hearts('local-test-user', 'programming')['available'] == 7
     assert token not in output.read_text()
+
+
+def test_schema_v1_migrates_without_losing_hearts_or_completions(tmp_path):
+    import sqlite3
+    path = tmp_path / 'legacy.db'
+    # A real v1 database created by the old code, then reopened by the upgrade.
+    # Use the old table definitions to avoid accidentally testing a fresh v2 DB.
+    con = sqlite3.connect(path)
+    con.executescript("""
+        CREATE TABLE schema_version(version INTEGER NOT NULL);
+        INSERT INTO schema_version VALUES(1);
+        CREATE TABLE hearts(uid TEXT NOT NULL, route TEXT NOT NULL,
+            credit_ms INTEGER NOT NULL, anchor_ms INTEGER NOT NULL,
+            revision INTEGER NOT NULL, PRIMARY KEY(uid,route),
+            CHECK(credit_ms>=0));
+        CREATE TABLE receipts(uid TEXT NOT NULL, operation TEXT NOT NULL,
+            route TEXT NOT NULL, reply TEXT NOT NULL, PRIMARY KEY(uid,operation));
+        CREATE TABLE completions(uid TEXT NOT NULL, kind TEXT NOT NULL,
+            course TEXT NOT NULL, item TEXT NOT NULL, completed_ms INTEGER NOT NULL,
+            PRIMARY KEY(uid,kind,course,item));
+        INSERT INTO hearts VALUES('student','programming',25200000,1800000000000,2);
+        INSERT INTO completions VALUES('student','unit','cpp1','u1',1800000000000);
+    """)
+    con.close()
+    db = Database(path, clock=lambda: 1800000000000)
+    assert db.hearts('student', 'programming')['available'] == 7
+    assert db.progress('student')['completed'][0]['item'] == 'u1'
+    assert db.settings('student') == {'settings': []}
+    assert db.complete('student', 'lesson', 'cpp1', 'l1')['saved']
+    assert Database(path).progress('student')['completed'][0]['kind'] == 'lesson'
+    with sqlite3.connect(path) as migrated:
+        assert migrated.execute("SELECT version FROM schema_version").fetchone() == (2,)
+
+
+def test_settings_revision_conflict_and_isolation(database):
+    db, clock = database
+    first = db.save_settings('alice', 'ui_language_settings', 0, {'selection': 'fr'})
+    assert first['revision'] == 1
+    same = db.save_settings('alice', 'ui_language_settings', 1, {'selection': 'fr'})
+    assert same['revision'] == 1
+    with pytest.raises(DomainError) as stale:
+        db.save_settings('alice', 'ui_language_settings', 0, {'selection': 'en'})
+    assert stale.value.status == 409
+    assert db.settings('bob') == {'settings': []}
+    assert db.save_settings('bob', 'ui_language_settings', 0, {'selection': 'en'})['revision'] == 1
+    updated = db.save_settings('alice', 'ui_language_settings', 1, {'selection': 'es'})
+    assert updated['revision'] == 2
+    assert db.settings('alice')['settings'][0]['values'] == {'selection': 'es'}
+    assert Database(db.path, clock=lambda: clock[0]).settings('alice') == db.settings('alice')
+
+
+@pytest.mark.parametrize('namespace,values', [
+    ('premium', {'enabled': True}),
+    ('ui_language_settings', {'purchase_token': 'private'}),
+    ('ui_language_settings', {'selection': 'not-a-language'}),
+    ('ui_language_settings', {'selection': True}),
+    ('appearance_settings', {'accent_red': 999}),
+    ('appearance_settings', {'accent_blue': False}),
+    ('lesson_narration_settings', {'android_voice': 'some-device-voice'}),
+    ('lesson_narration_settings', {'bar_x': 0.5}),
+    ('lesson_narration_settings', {'kokoro_paused_course:cpp1': True}),
+    ('keyboard_shortcut_settings', {'cpp_shortcuts': 'not json'}),
+    ('keyboard_shortcut_settings', {'cpp_shortcuts': '{"token":"secret"}'}),
+    ('keyboard_shortcut_settings', {'cpp_shortcuts': '["x" ,' + '"x",' * 90 + '"x"]'}),
+])
+def test_settings_rejects_unknown_device_specific_or_invalid_values(database, namespace, values):
+    db, _ = database
+    with pytest.raises(DomainError) as error:
+        db.save_settings('student', namespace, 0, values)
+    assert error.value.status == 422
+    assert db.settings('student') == {'settings': []}
+
+
+def test_settings_concurrent_puts_only_one_wins(database):
+    db, _ = database
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        def save(index):
+            try:
+                return db.save_settings('u', 'ui_language_settings', 0, {'selection': 'en' if index else 'fr'})
+            except DomainError as exc:
+                return exc.code
+        results = list(pool.map(save, range(5)))
+    assert sum(isinstance(result, dict) for result in results) == 1
+    assert results.count('settings_revision_conflict') == 4
+    assert db.settings('u')['settings'][0]['revision'] == 1
+
+
+
+def test_settings_api_is_authenticated_and_rejects_tampering(client):
+    payload = {'expected_revision': 0, 'values': {'selection': 'fr'}}
+    assert client.get('/v1/settings').json() == {'settings': []}
+    saved = client.put('/v1/settings/ui_language_settings', json=payload)
+    assert saved.status_code == 200
+    assert saved.json()['revision'] == 1
+    assert client.get('/v1/settings').json()['settings'][0]['values']['selection'] == 'fr'
+    assert client.put('/v1/settings/ui_language_settings', json=payload).status_code == 409
+    assert client.put('/v1/settings/ui_language_settings', json={
+        'expected_revision': 1, 'values': {'premium': True}}).status_code == 422
+    assert client.put('/v1/settings/ui_language_settings', json={
+        'expected_revision': 1, 'values': {'selection': 'es'}, 'admin': True}).status_code == 422
+    client.headers.pop('Authorization')
+    assert client.get('/v1/settings').status_code == 401
+    assert client.put('/v1/settings/ui_language_settings', json=payload).status_code == 401
