@@ -7,6 +7,7 @@ import subprocess
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import closing
 from pathlib import Path
 from uuid import uuid4
 
@@ -17,6 +18,8 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
 
 from manage import make_pki, write_private
+from accounts import AccountStore
+from account_ledger import AccountLedger
 from servertec import CAPACITIES, HOUR_MS, Database, DeviceIdentity, DomainError, FirebaseVerifier, PerPeerLimit, Settings, create_app
 
 
@@ -238,6 +241,11 @@ def test_actual_tls_server_persistence_and_hostname_validation(tmp_path):
         port = sock.getsockname()[1]
     write_private(state / 'config.json', json.dumps(dict(testing=True, project_id='',
         testing_token_hash=hashlib.sha256(token.encode()).hexdigest(), host='127.0.0.1', port=port)).encode())
+    auth_database = Database(state / 'servertec.db')
+    account_store = AccountStore(auth_database, AccountLedger(auth_database).enroll)
+    invitation = account_store.issue_invitation()['invitation']
+    password = 'private disposable HTTPS passphrase'
+    account_result = None
     output = tmp_path / 'server.log'
     with output.open('wb') as log:
         process = subprocess.Popen([sys.executable, 'manage.py', 'serve', '--state', str(state)],
@@ -262,6 +270,15 @@ def test_actual_tls_server_persistence_and_hostname_validation(tmp_path):
                 body = {'operation_id': str(uuid4()), 'route': 'programming'}
                 assert client.post('/v1/hearts/debits', json=body).json()['available'] == 7
                 assert client.post('/v1/hearts/debits', json=body).json()['replayed']
+                registered = client.post('/v2/auth/register', json={
+                    'username': 'HttpsStudent', 'password': password, 'invitation': invitation})
+                assert registered.status_code == 201
+                account_result = registered.json()
+                client.headers['Authorization'] = 'Bearer ' + account_result['access_token']
+                assert client.get('/v2/auth/me').json()['account_id'] == account_result['account_id']
+                assert client.get('/v2/hearts/programming').json()['available'] == 8
+                assert client.post('/v2/auth/logout').status_code == 200
+                assert client.get('/v2/auth/me').status_code == 401
             with pytest.raises(ssl.SSLCertVerificationError):
                 with socket.create_connection(('127.0.0.1', port), timeout=2) as plain:
                     ctx.wrap_socket(plain, server_hostname='wrong-server.invalid')
@@ -272,6 +289,10 @@ def test_actual_tls_server_persistence_and_hostname_validation(tmp_path):
             process.wait(timeout=10)
     assert Database(state / 'servertec.db').hearts('local-test-user', 'programming')['available'] == 7
     assert token not in output.read_text()
+    assert invitation not in output.read_text()
+    assert password not in output.read_text()
+    assert account_result['access_token'] not in output.read_text()
+    assert account_result['recovery_code'] not in output.read_text()
 
 
 def test_schema_v1_migrates_without_losing_hearts_or_completions(tmp_path):
@@ -302,7 +323,7 @@ def test_schema_v1_migrates_without_losing_hearts_or_completions(tmp_path):
     assert db.settings('student') == {'settings': []}
     assert db.complete('student', 'lesson', 'cpp1', 'l1')['saved']
     assert Database(path).progress('student')['completed'][0]['kind'] == 'lesson'
-    with sqlite3.connect(path) as migrated:
+    with closing(sqlite3.connect(path)) as migrated, migrated:
         assert migrated.execute("SELECT version FROM schema_version").fetchone() == (3,)
 
 
@@ -456,8 +477,8 @@ def test_backup_includes_device_key_for_stable_device_identity(tmp_path):
     assert DeviceIdentity(restored_state).hash('account-a', raw_device) == hashed
     import sqlite3
     destination = restored_state / 'servertec.db'
-    with sqlite3.connect(target) as source:
-        with sqlite3.connect(destination) as dest:
+    with closing(sqlite3.connect(target)) as source, source:
+        with closing(sqlite3.connect(destination)) as dest, dest:
             source.backup(dest)
     assert Database(destination).hearts_for_device(
         'account-a', hashed, 'programming')['available'] == 7
@@ -493,18 +514,18 @@ def test_upgrade_v2_preserves_settings_and_completions(tmp_path):
     old = Database(path, clock=lambda: 1800000000000)
     old.complete('existing', 'lesson', 'cpp1', 'l1')
     old.save_settings('existing', 'ui_language_settings', 0, {'selection': 'fr'})
-    with sqlite3.connect(path) as previous_schema:
+    with closing(sqlite3.connect(path)) as previous_schema, previous_schema:
         previous_schema.execute('UPDATE schema_version SET version=2')
         previous_schema.execute('DROP TABLE device_hearts')
         previous_schema.execute('DROP TABLE device_receipts')
     reopened = Database(path, clock=lambda: 1800000000000)
     assert reopened.progress('existing')['completed'][0]['item'] == 'l1'
     assert reopened.settings('existing')['settings'][0]['values'] == {'selection': 'fr'}
-    with sqlite3.connect(path) as upgraded:
+    with closing(sqlite3.connect(path)) as upgraded, upgraded:
         assert upgraded.execute('SELECT version FROM schema_version').fetchone() == (3,)
 
 
-def test_production_hearts_require_a_device_id_even_with_valid_identity(tmp_path):
+def test_production_legacy_hearts_are_retired_even_with_valid_identity(tmp_path):
     class TestVerifier:
         def verify(self, token):
             return 'google-account'
@@ -512,8 +533,11 @@ def test_production_hearts_require_a_device_id_even_with_valid_identity(tmp_path
     with TestClient(create_app(settings, verifier=TestVerifier()),
                     base_url='https://127.0.0.1', client=('127.0.0.1', 50123)) as c:
         headers = {'Authorization': 'Bearer qa-identity'}
-        assert c.get('/v1/hearts/programming', headers=headers).status_code == 422
+        assert c.get('/v1/hearts/programming', headers=headers).status_code == 410
         assert c.post('/v1/hearts/debits', headers=headers, json={
-            'route': 'programming', 'operation_id': str(uuid4())}).status_code == 422
+            'route': 'programming', 'operation_id': str(uuid4())}).status_code == 410
         headers['X-Android-Id'] = '0123456789abcdef'
-        assert c.get('/v1/hearts/programming', headers=headers).json()['available'] == 8
+        assert c.get('/v1/hearts/programming', headers=headers).status_code == 410
+        assert c.post('/v1/hearts/debits', headers=headers, json={
+            'route': 'programming', 'operation_id': str(uuid4())}).json() == {
+                'error': 'online_evaluation_required'}

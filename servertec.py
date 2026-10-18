@@ -23,10 +23,12 @@ from cryptography import x509
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, SecretStr
 from starlette.concurrency import run_in_threadpool
 
 from portable_settings import PORTABLE_NAMESPACES, validate_portable_settings
+from accounts import AccountError, AccountStore
+from account_ledger import AccountLedger, LedgerError
 
 HOUR_MS = 3_600_000
 CAPACITIES = {"programming": 8, "math_physics": 12}
@@ -420,7 +422,7 @@ class FirebaseVerifier:
                 raise ValueError("Unknown signing key")
             return keys[kid]
 
-    def verify(self, token: str) -> str:
+    def verify_identity(self, token: str) -> dict[str, Any]:
         header = jwt.get_unverified_header(token)
         kid = header.get("kid", "")
         if header.get("alg") != "RS256" or not isinstance(kid, str) or not 1 <= len(kid) <= 128:
@@ -431,12 +433,17 @@ class FirebaseVerifier:
         uid, auth_time = payload["sub"], payload["auth_time"]
         if not isinstance(uid, str) or not 1 <= len(uid) <= 128:
             raise ValueError("Invalid subject")
-        if not isinstance(auth_time, int) or auth_time > time.time() + 30:
+        if type(auth_time) is not int or auth_time > time.time() + 30:
             raise ValueError("Invalid authentication time")
         provider = payload.get("firebase", {})
         if not isinstance(provider, dict) or provider.get("sign_in_provider") != "google.com":
             raise ValueError("Google sign-in is required")
-        return uid
+        if type(payload["exp"]) is not int or payload["exp"] <= time.time():
+            raise ValueError("Invalid expiration")
+        return {"uid": uid, "expires_at_ms": payload["exp"] * 1000}
+
+    def verify(self, token: str) -> str:
+        return self.verify_identity(token)["uid"]
 
 
 class PerPeerLimit:
@@ -511,12 +518,49 @@ class SettingsUpdate(BaseModel):
     values: dict[str, Any]
 
 
-def create_app(settings: Settings, db: Database | None = None, verifier=None) -> FastAPI:
+class AuthBody(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+
+class LocalRegistration(AuthBody):
+    username: str = Field(pattern=r"^[A-Za-z0-9_]{3,32}$")
+    password: SecretStr = Field(min_length=15, max_length=128)
+    invitation: SecretStr = Field(min_length=1, max_length=128)
+
+
+class LocalLogin(AuthBody):
+    username: str = Field(min_length=1, max_length=128)
+    password: SecretStr = Field(min_length=1, max_length=128)
+
+
+class GoogleLogin(AuthBody):
+    id_token: SecretStr = Field(min_length=1, max_length=8192)
+    invitation: SecretStr | None = Field(default=None, max_length=128)
+
+
+class PasswordRecovery(AuthBody):
+    username: str = Field(min_length=1, max_length=128)
+    recovery_code: SecretStr = Field(min_length=1, max_length=128)
+    new_password: SecretStr = Field(min_length=15, max_length=128)
+
+
+class PasswordChange(AuthBody):
+    current_password: SecretStr = Field(min_length=1, max_length=128)
+    new_password: SecretStr = Field(min_length=15, max_length=128)
+
+
+def create_app(settings: Settings, db: Database | None = None, verifier=None,
+               accounts: AccountStore | None = None) -> FastAPI:
     settings.validate()
     database = db or Database(settings.state / "servertec.db")
     identity = verifier or FirebaseVerifier(settings.project_id)
     limiter = PerPeerLimit()
+    google_limiter = PerPeerLimit(quota=12)
     devices = DeviceIdentity(settings.state)
+    ledger = AccountLedger(database)
+    account_store = accounts or AccountStore(
+        database, on_enroll=ledger.enroll,
+        firebase_project="" if settings.testing else settings.project_id)
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, debug=False)
     app.add_middleware(SmallBodies)
 
@@ -536,6 +580,15 @@ def create_app(settings: Settings, db: Database | None = None, verifier=None) ->
     async def domain_error(request, error):
         return JSONResponse({"error": error.code}, error.status)
 
+    @app.exception_handler(AccountError)
+    async def account_error(request, error):
+        headers = {"Retry-After": str(error.retry_after)} if error.retry_after else None
+        return JSONResponse({"error": error.code}, error.status, headers=headers)
+
+    @app.exception_handler(LedgerError)
+    async def ledger_error(request, error):
+        return JSONResponse({"error": error.code}, error.status)
+
     @app.exception_handler(RequestValidationError)
     async def invalid_body(request, error):
         return JSONResponse({"error": "invalid_request"}, 422)
@@ -546,6 +599,10 @@ def create_app(settings: Settings, db: Database | None = None, verifier=None) ->
         return JSONResponse({"error": "storage_unavailable"}, 503, headers={"Retry-After": "3"})
 
     async def principal(request: Request):
+        if not settings.testing:
+            code = ("online_evaluation_required" if request.url.path == "/v1/hearts/debits"
+                    else "legacy_api_retired_use_v2")
+            raise DomainError(code, 410)
         header = request.headers.get("Authorization", "")
         if not header.startswith("Bearer ") or len(header) > 8192:
             raise HTTPException(401, "Authentication required")
@@ -565,6 +622,74 @@ def create_app(settings: Settings, db: Database | None = None, verifier=None) ->
         except (ValueError, jwt.PyJWTError, TypeError, KeyError):
             raise HTTPException(401, "Invalid identity token") from None
 
+    def peer_of(request: Request) -> str:
+        # Forwarded headers are never identities or rate-limit keys.
+        return request.client.host if request.client else "unknown"
+
+    def session_token(request: Request) -> str:
+        header = request.headers.get("Authorization", "")
+        if not header.startswith("Bearer ") or len(header) > 256:
+            raise AccountError("invalid_session", 401)
+        return header[7:]
+
+    def account_principal(request: Request) -> str:
+        return account_store.authenticate(session_token(request))
+
+    @app.post("/v2/auth/register", status_code=201)
+    def register_account(body: LocalRegistration, request: Request):
+        return account_store.register(body.username, body.password.get_secret_value(),
+                                      body.invitation.get_secret_value(), peer_of(request))
+
+    @app.post("/v2/auth/login")
+    def login_account(body: LocalLogin, request: Request):
+        return account_store.login(body.username, body.password.get_secret_value(), peer_of(request))
+
+    @app.post("/v2/auth/google")
+    async def login_google(body: GoogleLogin, request: Request):
+        if settings.testing:
+            raise AccountError("google_not_configured", 403)
+        if not google_limiter.allow(peer_of(request)):
+            raise AccountError("rate_limited", 429, 60)
+        try:
+            verified = await run_in_threadpool(identity.verify_identity, body.id_token.get_secret_value())
+        except httpx.HTTPError:
+            raise AccountError("identity_service_unavailable", 503, 60) from None
+        except (ValueError, jwt.PyJWTError, TypeError, KeyError):
+            raise AccountError("invalid_identity_token", 401) from None
+        invitation = None if body.invitation is None else body.invitation.get_secret_value()
+        return await run_in_threadpool(
+            account_store.google_login, verified["uid"], invitation, peer_of(request),
+            expires_at_ms=verified["expires_at_ms"])
+
+    @app.post("/v2/auth/recover")
+    def recover_account(body: PasswordRecovery, request: Request):
+        return account_store.recover(body.username, body.recovery_code.get_secret_value(),
+                                     body.new_password.get_secret_value(), peer_of(request))
+
+    @app.post("/v2/auth/password")
+    def change_account_password(body: PasswordChange, request: Request,
+                                uid: str = Depends(account_principal)):
+        return account_store.change_password(
+            session_token(request), body.current_password.get_secret_value(),
+            body.new_password.get_secret_value(), peer_of(request))
+
+    @app.post("/v2/auth/logout")
+    def logout_account(request: Request, uid: str = Depends(account_principal)):
+        account_store.logout(session_token(request))
+        return {"logged_out": True}
+
+    @app.get("/v2/auth/me")
+    def current_account(uid: str = Depends(account_principal)):
+        return {"account_id": uid}
+
+    @app.get("/v2/hearts/{route}")
+    def account_hearts(route: str, uid: str = Depends(account_principal)):
+        return ledger.snapshot(uid, route)
+
+    @app.get("/v2/progress")
+    def account_progress(uid: str = Depends(account_principal)):
+        return database.progress(uid)
+
     @app.get("/health")
     def health():
         return {"status": "ok", "service": "ServerTec"}
@@ -583,6 +708,8 @@ def create_app(settings: Settings, db: Database | None = None, verifier=None) ->
 
     @app.get("/v1/hearts/{route}")
     def hearts(route: str, request: Request, uid: str = Depends(principal)):
+        if not settings.testing:
+            raise DomainError("legacy_hearts_retired_use_v2", 410)
         device_hash = heart_device(request, uid)
         if device_hash is None:
             return database.hearts(uid, route)
@@ -590,6 +717,8 @@ def create_app(settings: Settings, db: Database | None = None, verifier=None) ->
 
     @app.post("/v1/hearts/debits")
     def debit(body: Debit, request: Request, uid: str = Depends(principal)):
+        if not settings.testing:
+            raise DomainError("online_evaluation_required", 410)
         device_hash = heart_device(request, uid)
         if device_hash is None:
             return database.hearts(uid, body.route, str(body.operation_id))

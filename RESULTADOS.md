@@ -119,3 +119,64 @@ Referencias técnicas consultadas para este paso:
 * https://developer.android.com/reference/kotlin/android/os/SystemClock
 * https://developer.android.com/reference/android/provider/Settings.Global#BOOT_COUNT
 * https://docs.python.org/3.13/library/sqlite3.html#how-to-use-the-connection-context-manager
+
+
+## 2026-10-18 — Autenticación v2 y saldo ligado a la cuenta
+
+Base de esta tanda: d466f086ce732aafaafb6bbf4f66af207402e596, ServerTec/main.
+
+Se añaden accounts.py, account_ledger.py y sus pruebas; se integra el contrato HTTP
+v2 en servertec.py y la emisión local de invitaciones en manage.py/ServerTec.ps1.
+AUTENTICACION.md describe el contrato y sus límites. Las tablas heredadas se
+conservan. No se modifican dependencias, rutas D/E ni el repositorio Android.
+
+Validación ejecutada sobre este cambio: Linux, Python 3.13.16, pytest 9.0.2 y las
+versiones fijadas de requirements.txt.
+
+```text
+python -X dev -m pytest -q -p no:cacheprovider \
+    -W error::ResourceWarning -W error::pytest.PytestUnraisableExceptionWarning
+265 passed, 1 warning in 19.89s
+
+python autoprueba.py
+Resultado: 9/9
+```
+
+El aviso restante procede de la compatibilidad Starlette/AnyIO:
+anyio.abc.BlockingPortal es un alias deprecado. No se cambiaron las versiones de
+dependencias para ocultarlo. Se cerraron cinco conexiones SQLite que las pruebas
+heredadas dejaban abiertas; la pasada final trata ResourceWarning y excepciones
+no capturables del recolector como errores, sin avisos de conexiones.
+
+Cobertura nueva:
+
+- 52 pruebas del núcleo de cuentas: unicidad y concurrencia, invitación de un uso,
+  caducidad mientras espera un escritor SQLite, rollback de inscripción,
+  scrypt real y formato fijo, sesiones sólo por hash, recuperación sin autologin,
+  revocación, límites persistentes y carreras de cambio de credenciales.
+- 42 pruebas del saldo canónico: alta de ambas rutas una vez, reapertura, ausencia
+  de estado sin grants, recarga lazy, reloj atrasado, suma de deuda de dispositivos
+  sin duplicar snapshots, deuda superior a capacidad, transacciones, copia de
+  progreso y cierre de conexiones.
+- 21 pruebas de integración HTTP: registro, login, recuperación, cambio y logout,
+  cuenta deshabilitada, retiro v1 en producción, cabeceras falsificadas, error
+  de almacenamiento, saldo ausente, Firebase firmado con claves temporales,
+  proyecto/proveedor/fechas incorrectos y migración de UID heredado.
+- La prueba HTTPS existente se amplió con registro v2 y scrypt real, lectura de
+  saldo, identidad y logout contra Uvicorn mediante sockets y certificados
+  reales. Verifica que contraseña, invitación, sesión y recuperación no aparezcan
+  en el archivo de logs.
+
+Una revisión independiente del código identificó y permitió corregir la vía de
+acceso heredada v1 tras deshabilitar una cuenta y la caducidad de invitación
+comprobada antes de esperar el bloqueo. Revalidó además secretos en SQLite,
+revocación de sesiones y la carrera entre login y cambio de credential_version.
+
+La autoprueba 9/9 conserva su contrato QA histórico; no representa nueve pruebas
+del evaluador v2. Ese evaluador aún no existe. Este paso tampoco verifica Google
+real, revocación remota Firebase, Windows/PowerShell, Honor, LDPlayer, acceso
+público ni carga de producción. No se ha alterado estado real en la PC del usuario.
+
+El diseño vigente sustituye la autorización de comprobaciones offline del modelo
+anterior: el futuro Android esperará una evaluación online confirmada. El módulo
+offline_hearts.py permanece como experimento QA sin importar desde el servicio.

@@ -58,39 +58,68 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\ServerTec.ps1 -Accion Veri
 
 Debe confirmar HTTPS con validación de certificado y nombre/IP. El servidor escucha únicamente en `127.0.0.1:8443`. Para detenerlo: Ctrl+C. No se instala todavía como servicio permanente.
 
-## Qué funciona en esta entrega
+## Autenticación y saldo por cuenta: estado actual
 
-* HTTPS con autoridad propia, certificado del servidor y validación real. Nunca `verify=False`, `curl -k` ni un verificador que acepte cualquier certificado.
-* SQLite con transacciones y respuestas idempotentes: repetir el mismo UUID de descuento no vuelve a gastar una vida; cambiar la ruta con el mismo UUID se rechaza.
-* Saldo de corazones persistente por **cuenta Google autenticada, dispositivo identificado por ANDROID_ID y ruta**: 8 en Programación y 12 en Matemáticas/Física. Cada ruta recupera una vida por hora con el reloj del servidor. ANDROID_ID se usa exclusivamente como identificador del dispositivo, protegido en SQLite mediante HMAC con una llave privada fuera de Git. El cliente Android aún necesita integrarse; esto no constituye protección infalible contra un APK modificado.
-* Sincronización autenticada de **lecciones, unidades y cursos completados**, más grupos permitidos de ajustes portables (idioma, apariencia, tamaño de texto, navegación, atajos y narración compatible). Se excluyen páginas, intentos parciales, audios, rutas de almacenamiento y datos sensibles.
-* Verificador de tokens Firebase firmados con RS256: valida emisor, audiencia, caducidad, identificador y proveedor Google. Claves públicas de Google almacenadas temporalmente en memoria, no consultadas en cada petición.
-* Modo de prueba local con token aleatorio, separado de la identidad Google real. No acepta un UID enviado en una cabecera. El token de pruebas nunca está incluido en Git.
-* Límite de tamaño de petición, plazo de recepción de cuerpo, concurrencia y frecuencia. Sin interfaz administrativa pública ni archivos estáticos.
-* Copia SQLite consistente: `-Accion Respaldo`, incluyendo una copia privada de `device-hmac.key` cuando ya exista. La restauración necesita conservar la misma llave para reconocer los identificadores de dispositivo. El respaldo sigue en el mismo disco y **no protege de una avería**; falta preparar una copia externa cifrada y probar su recuperación.
+La API v2 incorpora usuario y contraseña sin correo, Google/Firebase, sesiones
+revocables y consulta de corazones por identidad persistente. El contrato y sus
+límites están en [AUTENTICACION.md](AUTENTICACION.md).
 
-Los límites de frecuencia y tamaño son protecciones configuradas por nosotros, no cuotas comerciales. No representan una prueba de capacidad para 10 000 usuarios. No se han realizado ensayos de carga de esa escala.
+- El servidor genera el identificador interno. El nombre de usuario es único sin
+  distinguir mayúsculas. Contraseñas, sesiones, invitaciones y códigos privados
+  se guardan como hashes; nunca se admite un UID, saldo o Premium elegido por Android.
+- Las cuentas nuevas necesitan una invitación privada de un uso durante esta
+  fase de pruebas. Google también exige invitación para cuentas nuevas. Los UID
+  Google con datos anteriores a la migración pueden recuperar su identidad
+  mediante un token verificado. No se vinculan dos cuentas por correo o nombre.
+- La cuenta tiene 8 corazones en Programación y 12 en Matemáticas/Física. La
+  recuperación se calcula al consultar, con el reloj del servidor. No hay
+  temporizadores por usuario. Cambiar o quitar ANDROID_ID no crea otro saldo.
+- El alta crea ambos saldos dentro de la misma transacción que la cuenta y el
+  consumo de la invitación. Un saldo ausente después del alta produce un error;
+  iniciar sesión o consultar nunca lo reconstruye con vidas nuevas.
+- La migración conserva deudas y progreso anteriores, y deja las tablas viejas
+  como archivo. Cuando existen saldos de varios dispositivos suma sus deudas
+  pendientes, sin volver a contar el snapshot heredado.
+- El acceso local incluye un código privado de recuperación mostrado una vez.
+  Recuperar la contraseña conserva identidad y saldo, revoca todas las sesiones
+  y exige iniciar sesión de nuevo. También existen cierre de sesión y
+  deshabilitación administrativa local.
+- HTTPS, validación de certificados, límites de cuerpo, frecuencia y concurrencia
+  continúan activos. Las comprobaciones costosas de contraseña se limitan a una
+  simultánea por proceso; consultar con una sesión sólo requiere su validación en SQLite.
 
-## Contrato API preliminar
+**La evaluación de respuestas todavía no está implementada.** La API v2 permite
+autenticar, consultar el saldo y leer progreso preservado. No hay una ruta pública
+v2 para descontar corazones ni para declarar una respuesta correcta.
+La primitiva interna de débito exige una transacción y está reservada para el
+futuro evaluador; por sí sola no aporta validación ni idempotencia de intentos.
 
-Las rutas `/v1/*` necesitan `Authorization: Bearer <token>`. En pruebas, leer el token solo desde el archivo local protegido; nunca copiarlo al chat ni incrustarlo en una APK. La app final usará el token individual de Google/Firebase. **Para corazones en producción también se exige `X-Android-Id`**, el `ANDROID_ID` hexadecimal de 16 caracteres, enviado mediante HTTPS. Este identificador no sustituye la autenticación ni es una prueba criptográfica de integridad del dispositivo; los clientes QA de loopback todavía admiten ausencia de cabecera para compatibilidad con pruebas anteriores.
+### Contrato vigente y retirada del prototipo
 
 | Método | Ruta | Función |
 |---|---|---|
-| GET | `/health` | Estado mínimo, sin datos personales |
-| GET | `/v1/hearts/programming` | Saldo y referencia de recarga |
-| GET | `/v1/hearts/math_physics` | Saldo de la otra ruta |
-| POST | `/v1/hearts/debits` | `operation_id` UUID estable y `route` |
-| GET | `/v1/progress` | Lecciones, unidades y cursos completados de la identidad autenticada |
-| PUT | `/v1/progress/completions` | `kind: lesson/unit/course`, `course`, `item` |
-| GET | `/v1/settings` | Preferencias portables por namespace con revisión |
-| PUT | `/v1/settings/{namespace}` | Documento de preferencias validado, `expected_revision` y `values` |
+| GET | `/health` | Estado mínimo |
+| POST | `/v2/auth/register` | Usuario, contraseña e invitación |
+| POST | `/v2/auth/login` | Iniciar sesión local |
+| POST | `/v2/auth/google` | Intercambiar ID token Firebase de Google verificado |
+| POST | `/v2/auth/recover` | Recuperar con código privado y contraseña nueva |
+| POST | `/v2/auth/password` | Cambiar contraseña con sesión y contraseña actual |
+| POST | `/v2/auth/logout` | Revocar la sesión actual |
+| GET | `/v2/auth/me` | Identidad de la sesión |
+| GET | `/v2/hearts/{route}` | Saldo canónico y próxima recuperación |
+| GET | `/v2/progress` | Progreso de la identidad canónica |
 
-Un reintento devuelve el recibo original, posiblemente antiguo: no debe sustituir ciegamente un saldo posterior. El cliente debe usar la revisión/tiempo y consultar saldo cuando corresponda. Una operación rechazada por saldo cero sigue rechazada si se reintenta con ese UUID después de una recarga; el intento nuevo necesita otro UUID. No hay endpoint para fijar saldo o `premium=true` desde el cliente.
+Las rutas protegidas v2 requieren `Authorization: Bearer <sesión>`.
+No usan ANDROID_ID ni aceptan tokens QA como cuentas reales. Todas las rutas
+`/v1/*` quedan retiradas con HTTP 410 cuando `testing=false`.
+Sólo siguen disponibles en el modo QA con credencial aleatoria y origen loopback,
+para conservar las pruebas históricas. Sus descuentos y completados declarados
+por el cliente no forman parte del contrato final.
 
-**Este contrato todavía no valida en el servidor las soluciones de los puzzles.** Un cliente alterado podría omitir el aviso de fallo. Idempotencia evita doble cobro y el saldo guardado evita un nuevo regalo al reinstalar una identidad ya registrada; no prueba que todo uso se haya registrado. No sustituir aún `AttemptRepository` por este prototipo.
-
-Los completados son declaraciones autenticadas del estudiante, no títulos certificados por un evaluador remoto. La validación de IDs contra el catálogo se añadirá antes de exposición pública.
+La copia consistente `-Accion Respaldo` incluye las nuevas tablas de cuentas,
+sesiones y saldos al respaldar SQLite. Conserva además la clave HMAC heredada
+cuando existe. Este respaldo en el mismo disco todavía no tolera una avería del
+equipo; restaurar una copia antigua puede retroceder datos, sesiones y consumos.
 
 ## IPv6 dinámica: bloqueo de publicación aún abierto
 
@@ -106,13 +135,29 @@ Estado: `D:\Projects\ServerTec\state`. Contiene base de datos, token de pruebas,
 
 `.gitignore` es una protección adicional, no cifrado, y no borra secretos ya subidos. No mover bases o claves al repositorio al publicar. El certificado público de la autoridad podrá incorporarse al cliente en la fase Android; la clave privada nunca.
 
-## Próxima arquitectura y tareas pendientes
+## Próximos pasos del diseño autorizado
 
-**Alcance revisado:** sincronizar lecciones, unidades y cursos completados; los ajustes permanecen locales. Los endpoints de ajustes ya escritos se conservan como código heredado, no como autorización para sincronizarlos desde Android. El backend ya contiene estos contratos, así como separación de corazones por cuenta y dispositivo; **la aplicación Android todavía no está integrada**. La cuenta de desarrollador de Google Play Console todavía no puede crearse por su coste de registro; esto no bloquea el resto del trabajo. La recuperación offline aprobada aún necesita su motor de reloj y su conciliación cliente-servidor; este paso no cambia esas reglas ni añade temporizadores por usuario.
+El diseño aceptado exige conexión para comprobar respuestas antes de mostrar el
+resultado. ServerTec deberá evaluar contra reglas propias y confirmar intento,
+resultado y descuento juntos, con idempotencia por intento. La respuesta incluirá
+saldo y próxima recuperación para evitar una consulta adicional.
 
-Pendiente: ejecutar estos scripts en Windows y la prueba de HTTPS en tu PC; diagnosticar acceso público y cambios de dirección; configurar Google/Firebase real y revocación de sesiones; integrar la app en una variante QA sin destruir datos; implementar los contratos acordados de corazones/offline; revisar identidad y borrado de cuenta; comprobar Google Play Billing real; actualización/renovación de certificados; respaldo externo y restauración; aislamiento del servicio, inicio automático y recuperación tras corte; pruebas de carga; auditoría de dependencias y revisión de seguridad.
+La app podrá leer, escuchar recursos instalados y preparar respuestas offline.
+Una estimación local de recarga no autorizará evaluaciones ni modificará el
+saldo del servidor. `offline_hearts.py` conserva el experimento anterior para QA;
+no lo importa el servicio y su enfoque de recibos offline no debe activarse.
+Las nuevas reglas sustituyen ese plan anterior.
 
-Premium sigue separado. Esta entrega no concede Premium ni simula compras reales. No elimina offline ni altera la app. No tiene dependencias de Firestore.
+Pendiente en ServerTec: catálogo y evaluador autoritativos, idempotencia completa
+de evaluación, pruebas de interrupción y repetición, verificación de revocación
+real Firebase, política pública de registro, respaldo externo y restauración,
+auditoría de dependencias, carga y acceso remoto.
+
+La integración Android es una fase posterior en su repositorio y rama autorizados.
+Los ajustes permanecen locales; sólo el progreso curricular completado se prevé
+sincronizar. No se integró todavía este contrato en Honor ni LDPlayer, ni se
+cambió el control de descargas con datos móviles. Premium requiere su flujo de
+compra y verificación independiente; esta entrega no concede Premium.
 
 ## Referencias técnicas
 

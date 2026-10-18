@@ -18,6 +18,8 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 from servertec import Database, Settings, create_app
+from accounts import AccountError, AccountStore
+from account_ledger import AccountLedger
 
 
 def state_default() -> Path:
@@ -117,8 +119,10 @@ def backup_state(state: Path) -> tuple[Path, bool]:
 
 def main():
     parser = argparse.ArgumentParser(description="ServerTec: administracion local, sin abrir firewall")
-    parser.add_argument("action", choices=["check-init", "init", "serve", "verify", "backup", "certificate-info"])
+    parser.add_argument("action", choices=["check-init", "init", "serve", "verify", "backup", "certificate-info",
+                                           "invite", "disable-account"])
     parser.add_argument("--state", type=Path, default=state_default())
+    parser.add_argument("--account-id", help="Identidad interna exacta para disable-account")
     args = parser.parse_args()
     state = args.state.resolve()
     if state.is_relative_to(Path(__file__).resolve().parent):
@@ -169,6 +173,22 @@ def main():
             if json.load(reply) != {"status": "ok", "service": "ServerTec"}:
                 raise ValueError("Respuesta inesperada")
         print("HTTPS OK: cadena del certificado y nombre/IP verificados, sin excepciones inseguras.")
+    elif args.action in {"invite", "disable-account"}:
+        settings = load_settings(state)
+        database = Database(state / "servertec.db")
+        ledger = AccountLedger(database)
+        accounts = AccountStore(database, on_enroll=ledger.enroll,
+                                firebase_project="" if settings.testing else settings.project_id)
+        if args.action == "invite":
+            result = accounts.issue_invitation()
+            print("Invitacion privada de un solo uso (no guardar en Git ni informes):")
+            print(result["invitation"])
+            print("Caduca (UTC epoch ms):", result["expires_at_ms"])
+        else:
+            if not args.account_id:
+                raise ValueError("disable-account requiere --account-id; no se modifico una cuenta")
+            accounts.disable_account(args.account_id)
+            print("Cuenta deshabilitada y sesiones revocadas. Saldo y progreso conservados.")
     elif args.action == "backup":
         load_settings(state)
         target, has_device_key = backup_state(state)
@@ -188,6 +208,9 @@ def main():
 if __name__ == "__main__":
     try:
         main()
+    except AccountError as exc:
+        print(f"No se completo la operacion: {exc.code}", file=sys.stderr)
+        sys.exit(1)
     except (ValueError, FileNotFoundError, FileExistsError, OSError) as exc:
         print(f"No se completo la operacion: {exc}", file=sys.stderr)
         sys.exit(1)

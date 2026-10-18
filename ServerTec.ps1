@@ -1,7 +1,7 @@
 #requires -Version 5.1
 [CmdletBinding()]
 param(
-    [ValidateSet('Diagnostico','Preparar','Pruebas','Inicializar','Iniciar','Verificar','Respaldo','AutoPrueba','Rutas')]
+    [ValidateSet('Diagnostico','Preparar','Pruebas','Inicializar','Iniciar','Verificar','Respaldo','AutoPrueba','Rutas','Invitacion')]
     [string]$Accion = 'Diagnostico'
 )
 $ErrorActionPreference = 'Stop'
@@ -76,6 +76,6 @@ try {
         $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
         Invoke-Checked 'icacls.exe' @($state, '/inheritance:r', '/grant:r', ('*' + $sid + ':(OI)(CI)F'), '*S-1-5-18:(OI)(CI)F', '*S-1-5-32-544:(OI)(CI)F')
     }
-    $commands = @{Inicializar='init'; Iniciar='serve'; Verificar='verify'; Respaldo='backup'}
+    $commands = @{Inicializar='init'; Iniciar='serve'; Verificar='verify'; Respaldo='backup'; Invitacion='invite'}
     Invoke-Checked $venvPython @('manage.py', $commands[$Accion], '--state', $state)
 } finally { Pop-Location }
