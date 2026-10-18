@@ -1,10 +1,10 @@
-# ServerTec / primera entrega comprobable
+# ServerTec / servidor independiente de LearnGraphicsProgramming
 
 Servidor propio para LearnGraphicsProgramming. Código aislado de Android. **No está conectado todavía a la app ni habilitado para Internet o Google Play.** No modifica APK, voces, Enter, progreso local, router, DNS ni firewall.
 
 ## Ubicación y alcance
 
-Código temporal: `server/ServerTec` en `main` del repositorio privado de la app. Destino de trabajo en Windows: `E:\PersonalFiles\Projects\ServerTec`. No es obligatorio separar el repositorio por seguridad; sí es obligatorio separar claves y datos. Un repositorio nuevo privado sería conveniente para permisos y despliegue, pero su creación queda pendiente. No se utiliza el repositorio público de recursos.
+**Repositorio actual:** \`SimDynamics/ServerTec\` (privado, rama \`main\`), independiente de \`SimDynamics/LearnGraphicsProgramming\`. **Copia local:** \`E:\PersonalFiles\Projects\ServerTec\`. La migración por Git y la retirada de \`server/ServerTec\` del árbol \`main\` de la app ya se completaron. El repositorio público de recursos no participa. Claves privadas, certificados y SQLite permanecen fuera del código.
 
 Esta implementación usa Python 3.13+, FastAPI, Uvicorn, SQLite, cryptography y PyJWT. Son herramientas ejecutadas en tu equipo, sin suscripción de hosting ni cuota de operaciones de un proveedor. **No es el ejemplo previo en ASP.NET/C#: es una implementación Python independiente que se ha podido ejecutar y probar en este entorno.** No es un servicio de FastAPI alojado. La descarga de dependencias usa el registro de paquetes; el servidor no depende de ese registro después de instalarlas.
 
@@ -12,7 +12,7 @@ No se instala nada automáticamente con el diagnóstico. No hay Docker Desktop, 
 
 ## Primera ejecución en Windows
 
-Extraer el paquete en `E:\PersonalFiles\Projects\ServerTec`. Abrir PowerShell normal, no administrador:
+Tras clonar el repositorio privado en \`E:\PersonalFiles\Projects\ServerTec\`, **las actualizaciones posteriores llegan por Git, no por ZIP**. Verificar primero los cambios locales; si no hay conflictos ni modificaciones propias, usar \`git pull --ff-only origin main\`. Abrir PowerShell normal, sin administrador:
 
 ```powershell
 Set-Location -LiteralPath 'E:\PersonalFiles\Projects\ServerTec'
@@ -21,10 +21,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\ServerTec.ps1 -Accion Diag
 
 `Bypass` solo afecta a ese proceso, no cambia permanentemente la política de Windows. El diagnóstico lee las direcciones, prefijos reales, rutas y disponibilidad de Python/ADB. No escanea Internet. El informe completo queda fuera de Git, en `%LOCALAPPDATA%\ServerTec\reports`. Compartir solo su resumen.
 
-Después, cuando esté disponible Python 3.13 o posterior:
+Después, cuando esté disponible Python 3.13 o posterior, **validar primero la copia de prueba aislada**:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\ServerTec.ps1 -Accion Preparar
+powershell -NoProfile -ExecutionPolicy Bypass -File .\ServerTec.ps1 -Accion AutoPrueba
+```
+
+**Solo después de aprobar la autoprueba**, si se desea inicializar un estado local persistente de desarrollo, utilizar:
+
+```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\ServerTec.ps1 -Accion Inicializar
 powershell -NoProfile -ExecutionPolicy Bypass -File .\ServerTec.ps1 -Accion Iniciar
 ```
@@ -44,7 +50,7 @@ Debe confirmar HTTPS con validación de certificado y nombre/IP. El servidor esc
 
 * HTTPS con autoridad propia, certificado del servidor y validación real. Nunca `verify=False`, `curl -k` ni un verificador que acepte cualquier certificado.
 * SQLite con transacciones y respuestas idempotentes: repetir el mismo UUID de descuento no vuelve a gastar una vida; cambiar la ruta con el mismo UUID se rechaza.
-* Saldo inicial persistente por identidad y ruta: 8 en Programación, 12 en Matemáticas/Física, recuperación continua de una vida/hora, calculada en el servidor al consultar. No hay tareas por segundo ni llamadas a un reloj remoto.
+* Saldo inicial persistente por identidad y ruta: **8 en Programación y 12 en Matemáticas/Física por decisión expresa del usuario**, recuperación continua de una vida/hora, calculada en el servidor al consultar. La separación por identidad **y dispositivo** está planificada, pero todavía no implementada; ver el documento de arquitectura.
 * Registro de unidades y cursos completos únicamente. No hay endpoint para páginas, intentos, ajustes o lecciones individuales.
 * Verificador de tokens Firebase firmados con RS256: valida emisor, audiencia, caducidad, identificador y proveedor Google. Claves públicas de Google almacenadas temporalmente en memoria, no consultadas en cada petición.
 * Modo de prueba local con token aleatorio, separado de la identidad Google real. No acepta un UID enviado en una cabecera. El token de pruebas nunca está incluido en Git.
@@ -86,7 +92,9 @@ Estado: `%LOCALAPPDATA%\ServerTec\state`. Contiene base de datos, token de prueb
 
 `.gitignore` es una protección adicional, no cifrado, y no borra secretos ya subidos. No mover bases o claves al repositorio al publicar. El certificado público de la autoridad podrá incorporarse al cliente en la fase Android; la clave privada nunca.
 
-## Antes de Google Play / producción
+## Próxima arquitectura y tareas pendientes
+
+**Diseño objetivo y dudas de alcance por resolver:** [`docs/ARQUITECTURA-OBJETIVO.md`](docs/ARQUITECTURA-OBJETIVO.md). El código ejecutable actual no implementa todavía corazones separados por dispositivo, la nueva sincronización de lecciones/ajustes ni el cliente Android. La cuenta de desarrollador de Google Play Console todavía no puede crearse por su coste de registro; esto no bloquea el resto del trabajo.
 
 Pendiente: ejecutar estos scripts en Windows y la prueba de HTTPS en tu PC; diagnosticar acceso público y cambios de dirección; configurar Google/Firebase real y revocación de sesiones; integrar la app en una variante QA sin destruir datos; implementar los contratos acordados de corazones/offline; revisar identidad y borrado de cuenta; comprobar Google Play Billing real; actualización/renovación de certificados; respaldo externo y restauración; aislamiento del servicio, inicio automático y recuperación tras corte; pruebas de carga; auditoría de dependencias y revisión de seguridad.
 
