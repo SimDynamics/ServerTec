@@ -78,6 +78,23 @@ def load_settings(state: Path) -> Settings:
     return settings
 
 
+
+def backup_state(state: Path) -> tuple[Path, bool]:
+    """Preserve the SQLite database and its companion device HMAC key together."""
+    folder = state / "backups"
+    folder.mkdir(mode=0o700, exist_ok=True)
+    target = folder / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ-")
+                       + secrets.token_hex(4) + ".db")
+    source_key = state / "device-hmac.key"
+    secret = source_key.read_bytes() if source_key.exists() else None
+    if secret is not None and len(secret) != 32:
+        raise ValueError("La llave de dispositivo esta danada; no se creara un respaldo incompleto")
+    Database(state / "servertec.db").backup(target)
+    if secret is not None:
+        write_private(folder / (target.name + ".device-hmac.key"), secret)
+    return target, secret is not None
+
+
 def main():
     parser = argparse.ArgumentParser(description="ServerTec: administracion local, sin abrir firewall")
     parser.add_argument("action", choices=["init", "serve", "verify", "backup", "certificate-info"])
@@ -131,11 +148,11 @@ def main():
         print("HTTPS OK: cadena del certificado y nombre/IP verificados, sin excepciones inseguras.")
     elif args.action == "backup":
         load_settings(state)
-        folder = state / "backups"
-        folder.mkdir(mode=0o700, exist_ok=True)
-        target = folder / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ-") + secrets.token_hex(4) + ".db")
-        Database(state / "servertec.db").backup(target)
+        target, has_device_key = backup_state(state)
         print("Copia SQLite verificada:", target.name)
+        if has_device_key:
+            print("Llave HMAC de dispositivos respaldada junto al archivo SQLite.")
+            print("Al restaurar, conservar la misma llave privada; no exponer su contenido.")
         print("Esta copia esta en el MISMO equipo. Falta una copia externa para tolerar averias.")
     else:
         cert = x509.load_pem_x509_certificate((state / "server.pem").read_bytes())

@@ -435,3 +435,29 @@ def test_http_device_header_protects_balances_and_bad_ids(client):
     assert client.get('/v1/hearts/programming', headers={'X-Android-Id': 'not-a-device'}).status_code == 422
     assert client.get('/v1/hearts/programming', headers={
         'X-Android-Id': '0123456789abcdef', 'X-Forwarded-For': '127.0.0.1'}).status_code == 200
+
+
+def test_backup_includes_device_key_for_stable_device_identity(tmp_path):
+    from manage import backup_state
+    state = tmp_path / 'private-state'
+    state.mkdir()
+    db = Database(state / 'servertec.db')
+    raw_device = '0123456789abcdef'
+    hashed = DeviceIdentity(state).hash('account-a', raw_device)
+    assert db.hearts_for_device('account-a', hashed, 'programming', str(uuid4()))['available'] == 7
+    target, has_key = backup_state(state)
+    assert has_key and target.exists()
+    key_copy = target.with_name(target.name + '.device-hmac.key')
+    assert key_copy.exists()
+    assert key_copy.read_bytes() == (state / 'device-hmac.key').read_bytes()
+    restored_state = tmp_path / 'restored-state'
+    restored_state.mkdir()
+    (restored_state / 'device-hmac.key').write_bytes(key_copy.read_bytes())
+    assert DeviceIdentity(restored_state).hash('account-a', raw_device) == hashed
+    import sqlite3
+    destination = restored_state / 'servertec.db'
+    with sqlite3.connect(target) as source:
+        with sqlite3.connect(destination) as dest:
+            source.backup(dest)
+    assert Database(destination).hearts_for_device(
+        'account-a', hashed, 'programming')['available'] == 7

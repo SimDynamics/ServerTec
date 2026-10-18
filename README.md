@@ -50,18 +50,18 @@ Debe confirmar HTTPS con validación de certificado y nombre/IP. El servidor esc
 
 * HTTPS con autoridad propia, certificado del servidor y validación real. Nunca `verify=False`, `curl -k` ni un verificador que acepte cualquier certificado.
 * SQLite con transacciones y respuestas idempotentes: repetir el mismo UUID de descuento no vuelve a gastar una vida; cambiar la ruta con el mismo UUID se rechaza.
-* Saldo inicial persistente por identidad y ruta: **8 en Programación y 12 en Matemáticas/Física por decisión expresa del usuario**, recuperación continua de una vida/hora, calculada en el servidor al consultar. La separación por identidad **y dispositivo** está planificada, pero todavía no implementada; ver el documento de arquitectura.
-* Registro de unidades y cursos completos únicamente. No hay endpoint para páginas, intentos, ajustes o lecciones individuales.
+* Saldo de corazones persistente por **cuenta Google autenticada, dispositivo identificado por ANDROID_ID y ruta**: 8 en Programación y 12 en Matemáticas/Física. Cada ruta recupera una vida por hora con el reloj del servidor. ANDROID_ID se usa exclusivamente como identificador del dispositivo, protegido en SQLite mediante HMAC con una llave privada fuera de Git. El cliente Android aún necesita integrarse; esto no constituye protección infalible contra un APK modificado.
+* Sincronización autenticada de **lecciones, unidades y cursos completados**, más grupos permitidos de ajustes portables (idioma, apariencia, tamaño de texto, navegación, atajos y narración compatible). Se excluyen páginas, intentos parciales, audios, rutas de almacenamiento y datos sensibles.
 * Verificador de tokens Firebase firmados con RS256: valida emisor, audiencia, caducidad, identificador y proveedor Google. Claves públicas de Google almacenadas temporalmente en memoria, no consultadas en cada petición.
 * Modo de prueba local con token aleatorio, separado de la identidad Google real. No acepta un UID enviado en una cabecera. El token de pruebas nunca está incluido en Git.
 * Límite de tamaño de petición, plazo de recepción de cuerpo, concurrencia y frecuencia. Sin interfaz administrativa pública ni archivos estáticos.
-* Copia SQLite consistente e integridad comprobada: `-Accion Respaldo`. Una copia en el mismo disco NO protege de una avería; falta preparar la copia externa.
+* Copia SQLite consistente: `-Accion Respaldo`, incluyendo una copia privada de `device-hmac.key` cuando ya exista. La restauración necesita conservar la misma llave para reconocer los identificadores de dispositivo. El respaldo sigue en el mismo disco y **no protege de una avería**; falta preparar una copia externa cifrada y probar su recuperación.
 
 Los límites de frecuencia y tamaño son protecciones configuradas por nosotros, no cuotas comerciales. No representan una prueba de capacidad para 10 000 usuarios. No se han realizado ensayos de carga de esa escala.
 
 ## Contrato API preliminar
 
-Las rutas `/v1/*` necesitan `Authorization: Bearer <token>`. En pruebas, leer el token solo desde el archivo local protegido; nunca copiarlo al chat ni incrustarlo en una APK. La app final usará el token individual de Google/Firebase.
+Las rutas `/v1/*` necesitan `Authorization: Bearer <token>`. En pruebas, leer el token solo desde el archivo local protegido; nunca copiarlo al chat ni incrustarlo en una APK. La app final usará el token individual de Google/Firebase. **Para corazones en producción también se exige `X-Android-Id`**, el `ANDROID_ID` hexadecimal de 16 caracteres, enviado mediante HTTPS. Este identificador no sustituye la autenticación ni es una prueba criptográfica de integridad del dispositivo; los clientes QA de loopback todavía admiten ausencia de cabecera para compatibilidad con pruebas anteriores.
 
 | Método | Ruta | Función |
 |---|---|---|
@@ -69,8 +69,10 @@ Las rutas `/v1/*` necesitan `Authorization: Bearer <token>`. En pruebas, leer el
 | GET | `/v1/hearts/programming` | Saldo y referencia de recarga |
 | GET | `/v1/hearts/math_physics` | Saldo de la otra ruta |
 | POST | `/v1/hearts/debits` | `operation_id` UUID estable y `route` |
-| GET | `/v1/progress` | Unidades/cursos completados de la identidad autenticada |
-| PUT | `/v1/progress/completions` | `kind: unit/course`, `course`, `item` |
+| GET | `/v1/progress` | Lecciones, unidades y cursos completados de la identidad autenticada |
+| PUT | `/v1/progress/completions` | `kind: lesson/unit/course`, `course`, `item` |
+| GET | `/v1/settings` | Preferencias portables por namespace con revisión |
+| PUT | `/v1/settings/{namespace}` | Documento de preferencias validado, `expected_revision` y `values` |
 
 Un reintento devuelve el recibo original, posiblemente antiguo: no debe sustituir ciegamente un saldo posterior. El cliente debe usar la revisión/tiempo y consultar saldo cuando corresponda. Una operación rechazada por saldo cero sigue rechazada si se reintenta con ese UUID después de una recarga; el intento nuevo necesita otro UUID. No hay endpoint para fijar saldo o `premium=true` desde el cliente.
 
@@ -94,7 +96,7 @@ Estado: `%LOCALAPPDATA%\ServerTec\state`. Contiene base de datos, token de prueb
 
 ## Próxima arquitectura y tareas pendientes
 
-**Diseño objetivo y dudas de alcance por resolver:** [`docs/ARQUITECTURA-OBJETIVO.md`](docs/ARQUITECTURA-OBJETIVO.md). El código ejecutable actual no implementa todavía corazones separados por dispositivo, la nueva sincronización de lecciones/ajustes ni el cliente Android. La cuenta de desarrollador de Google Play Console todavía no puede crearse por su coste de registro; esto no bloquea el resto del trabajo.
+**Decisión del usuario confirmada:** sincronizar lecciones, unidades, cursos y ajustes portables. El backend ya contiene estos contratos, así como separación de corazones por cuenta y dispositivo; **la aplicación Android todavía no está integrada**. La cuenta de desarrollador de Google Play Console todavía no puede crearse por su coste de registro; esto no bloquea el resto del trabajo. La documentación de diseño inicial describe etapas anteriores y debe consultarse con esta implementación vigente.
 
 Pendiente: ejecutar estos scripts en Windows y la prueba de HTTPS en tu PC; diagnosticar acceso público y cambios de dirección; configurar Google/Firebase real y revocación de sesiones; integrar la app en una variante QA sin destruir datos; implementar los contratos acordados de corazones/offline; revisar identidad y borrado de cuenta; comprobar Google Play Billing real; actualización/renovación de certificados; respaldo externo y restauración; aislamiento del servicio, inicio automático y recuperación tras corte; pruebas de carga; auditoría de dependencias y revisión de seguridad.
 
