@@ -5,7 +5,7 @@ The random test credential is sent only to the newly generated local TLS server.
 """
 from __future__ import annotations
 
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 import hashlib
 import json
 import os
@@ -215,17 +215,13 @@ def run_selfcheck(*, timeout: float = 30.0) -> dict:
             finally:
                 stop_owned_process(process)
         # Read only the disposable database AFTER shutdown, including its WAL.
-        con = sqlite3.connect(state / 'servertec.db')
-        try:
+        with closing(sqlite3.connect(state / 'servertec.db')) as con:
             ensure(con.execute('PRAGMA integrity_check').fetchone()[0] == 'ok', 'database_integrity_failed')
             ensure(con.execute('SELECT COUNT(*) FROM device_receipts').fetchone()[0] == 1,
                    'persisted_receipt_count_incorrect')
             ensure(con.execute('SELECT COUNT(*) FROM completions').fetchone()[0] == 3,
                    'progress_not_persisted')
-        finally:
-            con.close()
-        with sqlite3.connect(state / 'servertec.db') as settings_con:
-            ensure(settings_con.execute('SELECT COUNT(*) FROM portable_settings').fetchone()[0] == 1,
+            ensure(con.execute('SELECT COUNT(*) FROM portable_settings').fetchone()[0] == 1,
                    'portable_settings_not_persisted')
         ensure(token not in (state / 'qa-server.log').read_text(errors='replace'), 'credential_in_logs')
         checks.append('persistencia_y_sin_credenciales_en_logs')

@@ -1,13 +1,15 @@
 #requires -Version 5.1
 [CmdletBinding()]
 param(
-    [ValidateSet('Diagnostico','Preparar','Pruebas','Inicializar','Iniciar','Verificar','Respaldo','AutoPrueba')]
+    [ValidateSet('Diagnostico','Preparar','Pruebas','Inicializar','Iniciar','Verificar','Respaldo','AutoPrueba','Rutas')]
     [string]$Accion = 'Diagnostico'
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $root = $PSScriptRoot
-$state = Join-Path $env:LOCALAPPDATA 'ServerTec\state'
+$dataRoot = 'D:\Projects\ServerTec'
+$state = Join-Path $dataRoot 'state'
+$reports = Join-Path $dataRoot 'reports'
 $venvPython = Join-Path $root '.venv\Scripts\python.exe'
 
 function Invoke-Checked([string]$Executable, [string[]]$Arguments) {
@@ -16,8 +18,16 @@ function Invoke-Checked([string]$Executable, [string[]]$Arguments) {
     if ($LASTEXITCODE -ne 0) { throw ('Fallo el comando; codigo ' + $LASTEXITCODE) }
 }
 
+if ($Accion -eq 'Rutas') {
+    Write-Host ('Repositorio: ' + $root)
+    Write-Host ('Estado privado: ' + $state)
+    Write-Host ('Respaldos: ' + (Join-Path $state 'backups'))
+    Write-Host ('Informes: ' + $reports)
+    Write-Host 'Solo consulta: no se crearon ni trasladaron datos.'
+    return
+}
 if ($Accion -eq 'Diagnostico') {
-    & (Join-Path $root 'Diagnostico-Red.ps1')
+    & (Join-Path $root 'Diagnostico-Red.ps1') -OutputDirectory $reports
     return
 }
 Push-Location -LiteralPath $root
@@ -56,6 +66,8 @@ try {
         return
     }
     if ($Accion -eq 'Inicializar') {
+        # Check before creating the directory or changing ACLs; keep legacy state intact.
+        Invoke-Checked $venvPython @('manage.py', 'check-init', '--state', $state)
         if ((Test-Path -LiteralPath $state) -and @(Get-ChildItem -LiteralPath $state -Force).Count -gt 0) {
             throw 'El estado ya existe. No se borro ni se sobrescribio.'
         }

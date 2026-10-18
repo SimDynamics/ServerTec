@@ -23,3 +23,40 @@ Las nuevas pruebas cubren: autoprueba aislada sin abrir datos reales; rechazo de
 También se añadieron **9 comprobaciones PowerShell** del resumen recortado, sin dependencia de Pester. **No se ejecutaron aquí**, porque este entorno no incluye PowerShell. Se ejecutarán en Windows mediante `Preparar` o `Pruebas`. No deben confundirse con las 9 comprobaciones HTTPS de la autoprueba, que sí se ejecutaron.
 
 El motor `servertec.py`, el aprovisionamiento `manage.py`, las dependencias, Android y el contrato de corazones/progreso no cambiaron en esta etapa. Sigue pendiente comprobar Windows 11/PowerShell 5.1 reales, Honor/LDPlayer, IPv4 WAN y conexiones entrantes, Google real y el descubrimiento de direcciones públicas cambiantes. No se abrieron puertos, no se instaló ningún certificado en el sistema y no se contrató ningún servicio.
+
+## Paso 1 tras la planificación: cierre SQLite y datos separados del código
+
+Base revisada: `8dc2682556be113096cd9a0fcd2ca7c4d2c20728`. El usuario notificó
+un WinError 32 sobre `servertec.db` al retirar el directorio QA. Se encontró una
+conexión abierta con `with sqlite3.connect(...)`: ese contexto gestiona transacciones,
+pero no cierra la conexión. Ahora todas las comprobaciones de persistencia comparten
+una conexión que se cierra explícitamente con `contextlib.closing` antes de limpiar.
+No se alargaron los reintentos para ocultar el defecto.
+
+Validación ejecutada en este paso, Linux / Python 3.13.5:
+
+* Las nuevas regresiones, reteniendo las conexiones para que el recolector no oculte
+  fugas, fallaron en el código anterior al terminar correctamente y al forzar un error
+  durante la comprobación de ajustes. El cierre durante otra excepción ya funcionaba.
+* `python -X dev -m pytest test_autoprueba.py test_sqlite_cleanup.py test_runtime_paths.py -q -p no:cacheprovider -W error::ResourceWarning`:
+  **20 pruebas dirigidas aprobadas**. No es una nueva ejecución de toda la batería.
+* `python autoprueba.py`: **9/9**, con HTTPS real, SQLite real y proceso hijo real.
+* Compilación sintáctica de los módulos Python revisados: correcta.
+
+Las rutas Windows se comprueban mediante pruebas de selección de plataforma y
+comprobaciones estáticas de los scripts. **No se ejecutó PowerShell ni Windows aquí**.
+Falta repetir `Pruebas` y `AutoPrueba` en el Windows del usuario con esta versión.
+El entorno emitió un aviso de configuración del plugin pytest-asyncio; no hubo errores
+por conexiones SQLite sin cerrar en las pruebas dirigidas.
+
+Configuración de almacenamiento: código en `E:\PersonalFiles\Projects\ServerTec`;
+estado en `D:\Projects\ServerTec\state`, respaldos en `state\backups` e informes
+en `D:\Projects\ServerTec\reports`. `Rutas` informa sin escribir.
+`Inicializar` comprueba el destino antes de crear directorios o modificar permisos y
+se detiene si detecta datos anteriores en LOCALAPPDATA, en lugar de crear nuevas claves
+y una segunda identidad de servidor silenciosamente. No se migraron datos de la PC.
+
+Este paso no modifica `servertec.py`, el esquema SQLite, las reglas de corazones,
+la API, dependencias, Android, Honor, LDPlayer ni la publicación en Google Play.
+Los endpoints heredados de ajustes continúan presentes; su comprobación QA no activa
+sincronización en Android ni cambia la decisión de mantener allí los ajustes locales.

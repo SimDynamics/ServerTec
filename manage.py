@@ -21,8 +21,28 @@ from servertec import Database, Settings, create_app
 
 
 def state_default() -> Path:
+    if sys.platform == "win32":
+        return Path(r"D:\Projects\ServerTec\state")
     root = Path(os.environ.get("LOCALAPPDATA", Path.home() / ".local" / "share"))
     return root / "ServerTec" / "state"
+
+
+def check_initialization_target(state: Path) -> None:
+    """Check only; never initialize over existing data or silently abandon legacy state."""
+    state = state.resolve()
+    if state.is_relative_to(Path(__file__).resolve().parent):
+        raise ValueError("Usa una carpeta de estado FUERA del repositorio")
+    if state.exists() and (not state.is_dir() or any(state.iterdir())):
+        raise ValueError("La carpeta de estado ya contiene datos. No se sobrescribe nada")
+    local_app_data = os.environ.get("LOCALAPPDATA")
+    if local_app_data:
+        legacy = (Path(local_app_data) / "ServerTec" / "state").resolve()
+        if legacy != state and legacy.exists() and (not legacy.is_dir() or any(legacy.iterdir())):
+            raise ValueError(
+                "Existe estado anterior en LOCALAPPDATA\\ServerTec\\state. "
+                "No se creara otro estado ni se moveran datos automaticamente; "
+                "primero debe verificarse su migracion al almacenamiento en D."
+            )
 
 
 def write_private(path: Path, content: bytes):
@@ -97,15 +117,18 @@ def backup_state(state: Path) -> tuple[Path, bool]:
 
 def main():
     parser = argparse.ArgumentParser(description="ServerTec: administracion local, sin abrir firewall")
-    parser.add_argument("action", choices=["init", "serve", "verify", "backup", "certificate-info"])
+    parser.add_argument("action", choices=["check-init", "init", "serve", "verify", "backup", "certificate-info"])
     parser.add_argument("--state", type=Path, default=state_default())
     args = parser.parse_args()
     state = args.state.resolve()
     if state.is_relative_to(Path(__file__).resolve().parent):
         raise ValueError("Usa una carpeta de estado FUERA del repositorio")
+    if args.action == "check-init":
+        check_initialization_target(state)
+        print("Destino de inicializacion comprobado. No se creo ni modifico ningun dato.")
+        return
     if args.action == "init":
-        if state.exists() and any(state.iterdir()):
-            raise ValueError("La carpeta de estado ya contiene datos. No se sobrescribe nada")
+        check_initialization_target(state)
         password = getpass.getpass("Frase privada para proteger la CA (minimo 16 caracteres): ")
         if password != getpass.getpass("Repite la frase: "):
             raise ValueError("Las frases no coinciden")

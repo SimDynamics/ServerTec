@@ -10,16 +10,28 @@ Esta implementación usa Python 3.13+, FastAPI, Uvicorn, SQLite, cryptography y 
 
 No se instala nada automáticamente con el diagnóstico. No hay Docker Desktop, túneles, dominios, plataformas de despliegue ni GitHub Actions nuevos. GitHub solo conserva código fuente.
 
+## Datos en D y código en E
+
+El código Git permanece en `E:\PersonalFiles\Projects\ServerTec`. El almacenamiento persistente es `D:\Projects\ServerTec`:
+
+* `state`: SQLite, certificados, claves, configuración y credencial de pruebas.
+* `state\backups`: respaldos privados de SQLite y su clave HMAC.
+* `reports`: diagnósticos privados de red.
+
+`ServerTec.ps1 -Accion Rutas` muestra estas ubicaciones sin crear ni mover archivos. `manage.py` usa la misma ruta de estado por defecto en Windows; `--state` continúa disponible para pruebas aisladas. La autoprueba usa solo un directorio temporal desechable del sistema, no abre los datos de D.
+
+**No se trasladan datos antiguos automáticamente.** Si `Inicializar` detecta estado anterior en `%LOCALAPPDATA%\ServerTec\state`, se detiene antes de crear otro estado o generar nuevas claves. Si D no está disponible, no se sustituye silenciosamente por C ni por el repositorio. GitHub Desktop recibe únicamente código; no copia bases de datos ni secretos.
+
 ## Primera ejecución en Windows
 
-Tras clonar el repositorio privado en `E:\PersonalFiles\Projects\ServerTec`, **las actualizaciones posteriores llegan por Git, no por ZIP**. Verificar primero los cambios locales; si no hay conflictos ni modificaciones propias, usar `git pull --ff-only origin main`. Abrir PowerShell normal, sin administrador:
+Tras clonar el repositorio privado en `E:\PersonalFiles\Projects\ServerTec`, **las actualizaciones posteriores llegan por Git, no por ZIP**. El usuario recibe las actualizaciones mediante Fetch/Pull en GitHub Desktop, seleccionando ServerTec y main; conservar cualquier cambio local propio. Abrir PowerShell normal, sin administrador:
 
 ```powershell
 Set-Location -LiteralPath 'E:\PersonalFiles\Projects\ServerTec'
 powershell -NoProfile -ExecutionPolicy Bypass -File .\ServerTec.ps1 -Accion Diagnostico
 ```
 
-`Bypass` solo afecta a ese proceso, no cambia permanentemente la política de Windows. El diagnóstico lee las direcciones, prefijos reales, rutas y disponibilidad de Python/ADB. No escanea Internet. El informe completo queda fuera de Git, en `%LOCALAPPDATA%\ServerTec\reports`. Compartir solo su resumen.
+`Bypass` solo afecta a ese proceso, no cambia permanentemente la política de Windows. El diagnóstico lee las direcciones, prefijos reales, rutas y disponibilidad de Python/ADB. No escanea Internet. El informe completo queda fuera de Git, en `D:\Projects\ServerTec\reports`. Compartir solo su resumen.
 
 Después, cuando esté disponible Python 3.13 o posterior, **validar primero la copia de prueba aislada**:
 
@@ -90,13 +102,13 @@ No se introducen DNS dinámicos, dominio, túnel, proxy ni un repositorio públi
 
 ## Git y secretos
 
-Estado: `%LOCALAPPDATA%\ServerTec\state`. Contiene base de datos, token de pruebas, configuración, certificado y claves. El servidor rechaza ubicarlo dentro del código. La CA privada queda cifrada; la clave de ejecución se protege mediante permisos locales y no se sirve por HTTP. El script no instala la CA como autoridad del sistema.
+Estado: `D:\Projects\ServerTec\state`. Contiene base de datos, token de pruebas, configuración, certificado y claves. El servidor rechaza ubicarlo dentro del código. La CA privada queda cifrada; la clave de ejecución se protege mediante permisos locales y no se sirve por HTTP. El script no instala la CA como autoridad del sistema.
 
 `.gitignore` es una protección adicional, no cifrado, y no borra secretos ya subidos. No mover bases o claves al repositorio al publicar. El certificado público de la autoridad podrá incorporarse al cliente en la fase Android; la clave privada nunca.
 
 ## Próxima arquitectura y tareas pendientes
 
-**Decisión del usuario confirmada:** sincronizar lecciones, unidades, cursos y ajustes portables. El backend ya contiene estos contratos, así como separación de corazones por cuenta y dispositivo; **la aplicación Android todavía no está integrada**. La cuenta de desarrollador de Google Play Console todavía no puede crearse por su coste de registro; esto no bloquea el resto del trabajo. La documentación de diseño inicial describe etapas anteriores y debe consultarse con esta implementación vigente.
+**Alcance revisado:** sincronizar lecciones, unidades y cursos completados; los ajustes permanecen locales. Los endpoints de ajustes ya escritos se conservan como código heredado, no como autorización para sincronizarlos desde Android. El backend ya contiene estos contratos, así como separación de corazones por cuenta y dispositivo; **la aplicación Android todavía no está integrada**. La cuenta de desarrollador de Google Play Console todavía no puede crearse por su coste de registro; esto no bloquea el resto del trabajo. La recuperación offline aprobada aún necesita su motor de reloj y su conciliación cliente-servidor; este paso no cambia esas reglas ni añade temporizadores por usuario.
 
 Pendiente: ejecutar estos scripts en Windows y la prueba de HTTPS en tu PC; diagnosticar acceso público y cambios de dirección; configurar Google/Firebase real y revocación de sesiones; integrar la app en una variante QA sin destruir datos; implementar los contratos acordados de corazones/offline; revisar identidad y borrado de cuenta; comprobar Google Play Billing real; actualización/renovación de certificados; respaldo externo y restauración; aislamiento del servicio, inicio automático y recuperación tras corte; pruebas de carga; auditoría de dependencias y revisión de seguridad.
 

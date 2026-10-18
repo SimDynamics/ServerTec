@@ -1,6 +1,6 @@
 #requires -Version 5.1
 [CmdletBinding()]
-param([string]$OutputDirectory = (Join-Path $env:LOCALAPPDATA 'ServerTec\reports'))
+param([string]$OutputDirectory = 'D:\Projects\ServerTec\reports')
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
