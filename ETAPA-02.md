@@ -1,6 +1,6 @@
 # ServerTec: etapa 02, prueba local reproducible
 
-> **Nota histórica:** esta etapa se redactó antes de la migración al repositorio independiente privado `SimDynamics/ServerTec`. A partir de la migración, la recepción de cambios se hace por `git pull --ff-only origin main` desde `E:\PersonalFiles\Projects\ServerTec` (revisando previamente los cambios locales). **No utilizar el ZIP ni `actualizar.py` como flujo oficial de actualizaciones.** El sistema de pruebas descrito aquí sigue siendo válido; la documentación actual y la arquitectura objetivo están en `README.md` y `docs/ARQUITECTURA-OBJETIVO.md`.
+> **Nota histórica:** esta etapa se redactó antes de la migración al repositorio independiente privado `SimDynamics/ServerTec`. A partir de la migración, la recepción de cambios se hace por `git pull --ff-only origin main` desde `E:\PersonalFiles\Projects\ServerTec` (revisando previamente los cambios locales). **No utilizar el ZIP ni `actualizar.py` como flujo oficial de actualizaciones.** El sistema de pruebas descrito aquí sigue siendo válido; el contrato técnico vigente está en `README.md` y los resultados reales de pruebas en `RESULTADOS.md`. El borrador provisional ya fue sustituido por la implementación.
 
 ## Alcance de esta entrega
 
