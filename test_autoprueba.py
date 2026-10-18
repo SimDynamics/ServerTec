@@ -7,7 +7,8 @@ import sys
 
 import pytest
 
-from autoprueba import SelfCheckError, private_tls_context, run_selfcheck, stop_owned_process
+from autoprueba import (SelfCheckError, cleanup_disposable_directory, disposable_directory,
+                       private_tls_context, run_selfcheck, stop_owned_process)
 from manage import make_pki
 
 
@@ -63,10 +64,9 @@ def test_selfcheck_cleanup_after_mid_request_failure(monkeypatch):
     saved = []
     original = tempfile.TemporaryDirectory
     class TrackingTemporaryDirectory(original):
-        def __enter__(self):
-            value = super().__enter__()
-            saved.append(Path(value))
-            return value
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            saved.append(Path(self.name))
     monkeypatch.setattr(autoprueba.tempfile, 'TemporaryDirectory', TrackingTemporaryDirectory)
     original_ensure = autoprueba.ensure
     def fail_at_stage(value, code):
@@ -77,3 +77,34 @@ def test_selfcheck_cleanup_after_mid_request_failure(monkeypatch):
     with pytest.raises(SelfCheckError, match='simulated_stop'):
         autoprueba.run_selfcheck()
     assert saved and all(not p.exists() for p in saved)
+
+
+
+def test_temporary_cleanup_retries_windows_sharing_violation_only(monkeypatch):
+    import autoprueba
+    import tempfile
+    original = tempfile.TemporaryDirectory
+    instances = []
+
+    class SharingViolationOnce(original):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.attempts = 0
+            instances.append(self)
+
+        def cleanup(self):
+            self.attempts += 1
+            if self.attempts == 1:
+                error = PermissionError(13, 'transient sharing violation')
+                error.winerror = 32
+                raise error
+            super().cleanup()
+
+    monkeypatch.setattr(autoprueba.tempfile, 'TemporaryDirectory', SharingViolationOnce)
+    with disposable_directory() as folder:
+        marker = Path(folder) / 'owned-test-data'
+        marker.write_text('disposable')
+    assert len(instances) == 1
+    assert instances[0].attempts == 2
+    assert not Path(instances[0].name).exists()
+

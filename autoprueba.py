@@ -5,6 +5,7 @@ The random test credential is sent only to the newly generated local TLS server.
 """
 from __future__ import annotations
 
+from contextlib import contextmanager
 import hashlib
 import json
 import os
@@ -44,6 +45,30 @@ def stop_owned_process(process: subprocess.Popen) -> None:
             process.wait(timeout=5)
 
 
+
+def cleanup_disposable_directory(temporary: tempfile.TemporaryDirectory) -> None:
+    """Retry only Windows sharing violations for our own disposable QA directory."""
+    for attempt in range(30):
+        try:
+            temporary.cleanup()
+            return
+        except PermissionError as error:
+            # Windows/AV scanners can retain qa-server.log briefly after the
+            # owned child exited and the parent closed its log handle.
+            if getattr(error, 'winerror', None) not in (32, 33) or attempt == 29:
+                raise
+            time.sleep(0.1)
+
+
+@contextmanager
+def disposable_directory():
+    temporary = tempfile.TemporaryDirectory(prefix='ServerTec-QA-')
+    try:
+        yield temporary.name
+    finally:
+        cleanup_disposable_directory(temporary)
+
+
 def protect_temporary_state(path: Path) -> None:
     if os.name == 'nt':
         # Temporary files hold only disposable test credentials, still restrict ACLs.
@@ -78,7 +103,7 @@ def private_tls_context(ca_file: Path) -> ssl.SSLContext:
 def run_selfcheck(*, timeout: float = 30.0) -> dict:
     ensure(1 <= timeout <= 120, 'invalid_startup_timeout')
     checks: list[str] = []
-    with tempfile.TemporaryDirectory(prefix='ServerTec-QA-') as folder:
+    with disposable_directory() as folder:
         state = Path(folder).resolve()
         ensure(not state.is_relative_to(Path(__file__).resolve().parent), 'unsafe_temp_location')
         protect_temporary_state(state)
