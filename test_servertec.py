@@ -17,7 +17,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
 
 from manage import make_pki, write_private
-from servertec import CAPACITIES, HOUR_MS, Database, DomainError, FirebaseVerifier, PerPeerLimit, Settings, create_app
+from servertec import CAPACITIES, HOUR_MS, Database, DeviceIdentity, DomainError, FirebaseVerifier, PerPeerLimit, Settings, create_app
 
 
 @pytest.fixture
@@ -303,7 +303,7 @@ def test_schema_v1_migrates_without_losing_hearts_or_completions(tmp_path):
     assert db.complete('student', 'lesson', 'cpp1', 'l1')['saved']
     assert Database(path).progress('student')['completed'][0]['kind'] == 'lesson'
     with sqlite3.connect(path) as migrated:
-        assert migrated.execute("SELECT version FROM schema_version").fetchone() == (2,)
+        assert migrated.execute("SELECT version FROM schema_version").fetchone() == (3,)
 
 
 def test_settings_revision_conflict_and_isolation(database):
@@ -375,3 +375,63 @@ def test_settings_api_is_authenticated_and_rejects_tampering(client):
     client.headers.pop('Authorization')
     assert client.get('/v1/settings').status_code == 401
     assert client.put('/v1/settings/ui_language_settings', json=payload).status_code == 401
+
+
+def test_device_identity_is_stable_across_restart_and_never_stores_raw_id(tmp_path):
+    raw = '0a1b2c3d4e5f6071'
+    first = DeviceIdentity(tmp_path).hash('alice', raw)
+    assert first == DeviceIdentity(tmp_path).hash('alice', raw.upper())
+    assert first != DeviceIdentity(tmp_path).hash('bob', raw)
+    assert first != DeviceIdentity(tmp_path).hash('alice', '1a1b2c3d4e5f6071')
+    assert raw not in (tmp_path / 'device-hmac.key').read_bytes().hex()
+    with pytest.raises(ValueError):
+        DeviceIdentity(tmp_path).hash('alice', '../../secrets')
+    assert len((tmp_path / 'device-hmac.key').read_bytes()) == 32
+
+
+def test_device_hearts_isolate_devices_accounts_and_routes(database):
+    db, clock = database
+    device_a, device_b = ('a' * 64, 'b' * 64)
+    op = str(uuid4())
+    assert db.hearts_for_device('alice', device_a, 'programming', op)['available'] == 7
+    assert db.hearts_for_device('alice', device_a, 'programming', op)['replayed']
+    assert db.hearts_for_device('alice', device_b, 'programming')['available'] == 8
+    assert db.hearts_for_device('bob', device_a, 'programming')['available'] == 8
+    assert db.hearts_for_device('alice', device_a, 'math_physics')['available'] == 12
+    assert db.hearts_for_device('alice', device_b, 'programming', op)['available'] == 7
+    with pytest.raises(DomainError):
+        db.hearts_for_device('alice', device_a, 'math_physics', op)
+    clock[0] += HOUR_MS - 1
+    assert db.hearts_for_device('alice', device_a, 'programming')['available'] == 7
+    clock[0] += 1
+    assert db.hearts_for_device('alice', device_a, 'programming')['available'] == 8
+    assert Database(db.path, clock=lambda: clock[0]).hearts_for_device(
+        'alice', device_b, 'programming')['available'] == 8
+
+
+def test_first_device_inherits_legacy_balance_and_receipts(tmp_path):
+    clock = [1800000000000]
+    db = Database(tmp_path / 'legacy.db', clock=lambda: clock[0])
+    op = str(uuid4())
+    db.hearts('alice', 'programming', op)
+    db.hearts('alice', 'math_physics', str(uuid4()))
+    assert db.hearts_for_device('alice', 'a' * 64, 'programming')['available'] == 7
+    assert db.hearts_for_device('alice', 'a' * 64, 'programming', op)['replayed']
+    assert db.hearts_for_device('alice', 'a' * 64, 'math_physics')['available'] == 11
+    assert db.hearts_for_device('alice', 'b' * 64, 'programming')['available'] == 8
+    assert db.hearts('alice', 'programming')['available'] == 7
+    assert Database(db.path, clock=lambda: clock[0]).hearts_for_device(
+        'alice', 'a' * 64, 'programming')['available'] == 7
+
+
+def test_http_device_header_protects_balances_and_bad_ids(client):
+    device_a = {'X-Android-Id': '0123456789abcdef'}
+    device_b = {'X-Android-Id': 'abcdef0123456789'}
+    op = {'route': 'programming', 'operation_id': str(uuid4())}
+    assert client.get('/v1/hearts/programming', headers=device_a).json()['available'] == 8
+    assert client.post('/v1/hearts/debits', json=op, headers=device_a).json()['available'] == 7
+    assert client.get('/v1/hearts/programming', headers=device_b).json()['available'] == 8
+    assert client.get('/v1/hearts/programming', headers=device_a).json()['available'] == 7
+    assert client.get('/v1/hearts/programming', headers={'X-Android-Id': 'not-a-device'}).status_code == 422
+    assert client.get('/v1/hearts/programming', headers={
+        'X-Android-Id': '0123456789abcdef', 'X-Forwarded-For': '127.0.0.1'}).status_code == 200

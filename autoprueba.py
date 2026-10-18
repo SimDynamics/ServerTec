@@ -145,6 +145,7 @@ def run_selfcheck(*, timeout: float = 30.0) -> dict:
                     ensure(client.get('/v1/progress').status_code == 401, 'anonymous_request_accepted')
                     checks.append('rechazo_sin_autenticacion')
                     client.headers['Authorization'] = 'Bearer ' + token
+                    client.headers['X-Android-Id'] = '0123456789abcdef'
                     ensure(client.get('/v1/hearts/programming').json()['available'] == 8,
                            'initial_balance_incorrect')
                     operation = {'operation_id': str(uuid4()), 'route': 'programming'}
@@ -217,13 +218,12 @@ def run_selfcheck(*, timeout: float = 30.0) -> dict:
         con = sqlite3.connect(state / 'servertec.db')
         try:
             ensure(con.execute('PRAGMA integrity_check').fetchone()[0] == 'ok', 'database_integrity_failed')
-            ensure(con.execute('SELECT COUNT(*) FROM receipts').fetchone()[0] == 1,
+            ensure(con.execute('SELECT COUNT(*) FROM device_receipts').fetchone()[0] == 1,
                    'persisted_receipt_count_incorrect')
             ensure(con.execute('SELECT COUNT(*) FROM completions').fetchone()[0] == 3,
                    'progress_not_persisted')
         finally:
             con.close()
-        ensure(con is not None, 'database_not_checked')
         with sqlite3.connect(state / 'servertec.db') as settings_con:
             ensure(settings_con.execute('SELECT COUNT(*) FROM portable_settings').fetchone()[0] == 1,
                    'portable_settings_not_persisted')

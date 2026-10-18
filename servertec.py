@@ -6,6 +6,7 @@ import hashlib
 import hmac
 import ipaddress
 import json
+import os
 import re
 import sqlite3
 import threading
@@ -87,7 +88,7 @@ class Database:
             con.execute("BEGIN IMMEDIATE")
             try:
                 versions = con.execute("SELECT version FROM schema_version").fetchall()
-                if versions not in ([(1,)], [(2,)]):
+                if versions not in ([(1,)], [(2,)], [(3,)]):
                     raise RuntimeError("Unsupported database schema; do not overwrite it")
                 if versions == [(1,)]:
                     # Additive migration; never drop a completed lesson, heart or receipt.
@@ -100,6 +101,25 @@ class Database:
                 elif con.execute("""SELECT 1 FROM sqlite_master
                                     WHERE type='table' AND name='portable_settings'""").fetchone() is None:
                     raise RuntimeError("Settings table missing; do not overwrite schema")
+                if versions != [(3,)]:
+                    # Preserve legacy per-account hearts and receipts. The first
+                    # identified device inherits them under an atomic transaction.
+                    con.execute("""CREATE TABLE IF NOT EXISTS device_hearts(
+                        uid TEXT NOT NULL, device_hash TEXT NOT NULL,
+                        route TEXT NOT NULL, credit_ms INTEGER NOT NULL,
+                        anchor_ms INTEGER NOT NULL, revision INTEGER NOT NULL,
+                        PRIMARY KEY(uid,device_hash,route), CHECK(credit_ms>=0))""")
+                    con.execute("""CREATE TABLE IF NOT EXISTS device_receipts(
+                        uid TEXT NOT NULL, device_hash TEXT NOT NULL,
+                        operation TEXT NOT NULL, route TEXT NOT NULL,
+                        reply TEXT NOT NULL,
+                        PRIMARY KEY(uid,device_hash,operation))""")
+                    con.execute("UPDATE schema_version SET version=3 WHERE version=2")
+                else:
+                    for name in ("device_hearts", "device_receipts"):
+                        if con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
+                                       (name,)).fetchone() is None:
+                            raise RuntimeError("Device-state table missing; do not overwrite schema")
                 con.commit()
             except Exception:
                 con.rollback()
@@ -162,6 +182,82 @@ class Database:
                 reply = {"status": "balance", **self._reply(route, credit, anchor, revision, cap)}
             con.execute("UPDATE hearts SET credit_ms=?,anchor_ms=?,revision=? WHERE uid=? AND route=?",
                         (credit, anchor, revision, uid, route))
+            con.commit()
+            return {"replayed": False, **reply}
+        except Exception:
+            con.rollback()
+            raise
+        finally:
+            con.close()
+
+
+    def hearts_for_device(self, uid: str, device_hash: str, route: str,
+                          operation: str | None = None):
+        """Persist balances per authenticated account + hashed device + route.
+
+        Once only, the first device for a legacy account inherits its prior
+        balances and idempotency receipts, rather than being given free lives.
+        """
+        if route not in CAPACITIES:
+            raise DomainError("unknown_route", 422)
+        if re.fullmatch(r"[0-9a-f]{64}", device_hash) is None:
+            raise DomainError("invalid_device", 422)
+        con = self.connect()
+        try:
+            con.execute("BEGIN IMMEDIATE")
+            if con.execute("SELECT 1 FROM device_hearts WHERE uid=? LIMIT 1",
+                           (uid,)).fetchone() is None:
+                previous_hearts = con.execute(
+                    "SELECT route,credit_ms,anchor_ms,revision FROM hearts WHERE uid=?",
+                    (uid,)).fetchall()
+                for previous_route, credit, anchor, revision in previous_hearts:
+                    con.execute(
+                        "INSERT INTO device_hearts VALUES(?,?,?,?,?,?)",
+                        (uid, device_hash, previous_route, credit, anchor, revision))
+                for previous_operation, previous_route, reply in con.execute(
+                    "SELECT operation,route,reply FROM receipts WHERE uid=?", (uid,)).fetchall():
+                    con.execute("INSERT INTO device_receipts VALUES(?,?,?,?,?)",
+                                (uid, device_hash, previous_operation, previous_route, reply))
+            if operation is not None:
+                previous = con.execute(
+                    "SELECT route,reply FROM device_receipts "
+                    "WHERE uid=? AND device_hash=? AND operation=?",
+                    (uid, device_hash, operation)).fetchone()
+                if previous:
+                    if previous[0] != route:
+                        raise DomainError("idempotency_key_reused_for_different_route")
+                    con.commit()
+                    return {"replayed": True, **json.loads(previous[1])}
+            now, cap = int(self.clock()), CAPACITIES[route]
+            con.execute(
+                "INSERT OR IGNORE INTO device_hearts VALUES(?,?,?,?,?,1)",
+                (uid, device_hash, route, cap * HOUR_MS, now))
+            credit, anchor, revision = con.execute(
+                "SELECT credit_ms,anchor_ms,revision FROM device_hearts "
+                "WHERE uid=? AND device_hash=? AND route=?",
+                (uid, device_hash, route)).fetchone()
+            effective = max(now, anchor)
+            credit = min(cap * HOUR_MS, credit + effective - anchor)
+            if operation is not None:
+                if credit < HOUR_MS:
+                    reply = {"status": "empty",
+                             **self._reply(route, credit, effective, revision, cap)}
+                else:
+                    credit -= HOUR_MS
+                    revision += 1
+                    reply = {"status": "charged",
+                             **self._reply(route, credit, effective, revision, cap)}
+                con.execute(
+                    "INSERT INTO device_receipts VALUES(?,?,?,?,?)",
+                    (uid, device_hash, operation, route,
+                     json.dumps(reply, separators=(",", ":"))))
+            else:
+                reply = {"status": "balance",
+                         **self._reply(route, credit, effective, revision, cap)}
+            con.execute(
+                "UPDATE device_hearts SET credit_ms=?,anchor_ms=?,revision=? "
+                "WHERE uid=? AND device_hash=? AND route=?",
+                (credit, effective, revision, uid, device_hash, route))
             con.commit()
             return {"replayed": False, **reply}
         except Exception:
@@ -263,6 +359,37 @@ class Database:
             source.close()
             target.close()
         destination.chmod(0o600)
+
+
+
+class DeviceIdentity:
+    """Persist a private HMAC key outside Git; never store raw ANDROID_ID."""
+
+    def __init__(self, state: Path):
+        self.path = state / "device-hmac.key"
+        self.lock = threading.Lock()
+        self.secret: bytes | None = None
+
+    def hash(self, uid: str, android_id: str) -> str:
+        if re.fullmatch(r"[0-9a-fA-F]{16}", android_id) is None:
+            raise ValueError("invalid_device")
+        with self.lock:
+            if self.secret is None:
+                if not self.path.exists():
+                    secret = os.urandom(32)
+                    try:
+                        with os.fdopen(os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+                                              0o600), "wb") as stream:
+                            stream.write(secret)
+                            stream.flush()
+                            os.fsync(stream.fileno())
+                    except FileExistsError:
+                        pass
+                self.secret = self.path.read_bytes()
+                if len(self.secret) != 32:
+                    raise RuntimeError("Device HMAC key is missing or damaged; do not reset it")
+            return hmac.new(self.secret, (uid + "\x00" + android_id.lower()).encode(),
+                            hashlib.sha256).hexdigest()
 
 
 class FirebaseVerifier:
@@ -389,6 +516,7 @@ def create_app(settings: Settings, db: Database | None = None, verifier=None) ->
     database = db or Database(settings.state / "servertec.db")
     identity = verifier or FirebaseVerifier(settings.project_id)
     limiter = PerPeerLimit()
+    devices = DeviceIdentity(settings.state)
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, debug=False)
     app.add_middleware(SmallBodies)
 
@@ -441,13 +569,31 @@ def create_app(settings: Settings, db: Database | None = None, verifier=None) ->
     def health():
         return {"status": "ok", "service": "ServerTec"}
 
+    def heart_device(request: Request, uid: str) -> str | None:
+        # Older QA tests may omit the header; real accounts must identify a device.
+        raw_id = request.headers.get("X-Android-Id")
+        if not raw_id:
+            if settings.testing:
+                return None
+            raise HTTPException(422, "Device identifier required")
+        try:
+            return devices.hash(uid, raw_id)
+        except ValueError:
+            raise HTTPException(422, "Invalid device identifier") from None
+
     @app.get("/v1/hearts/{route}")
-    def hearts(route: str, uid: str = Depends(principal)):
-        return database.hearts(uid, route)
+    def hearts(route: str, request: Request, uid: str = Depends(principal)):
+        device_hash = heart_device(request, uid)
+        if device_hash is None:
+            return database.hearts(uid, route)
+        return database.hearts_for_device(uid, device_hash, route)
 
     @app.post("/v1/hearts/debits")
-    def debit(body: Debit, uid: str = Depends(principal)):
-        return database.hearts(uid, body.route, str(body.operation_id))
+    def debit(body: Debit, request: Request, uid: str = Depends(principal)):
+        device_hash = heart_device(request, uid)
+        if device_hash is None:
+            return database.hearts(uid, body.route, str(body.operation_id))
+        return database.hearts_for_device(uid, device_hash, body.route, str(body.operation_id))
 
     @app.get("/v1/progress")
     def progress(uid: str = Depends(principal)):
