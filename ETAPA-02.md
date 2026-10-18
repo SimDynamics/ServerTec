@@ -1,5 +1,7 @@
 # ServerTec: etapa 02, prueba local reproducible
 
+> **Nota histórica:** esta etapa se redactó antes de la migración al repositorio independiente privado `SimDynamics/ServerTec`. A partir de la migración, la recepción de cambios se hace por `git pull --ff-only origin main` desde `E:\\PersonalFiles\\Projects\\ServerTec` (revisando previamente los cambios locales). **No utilizar el ZIP ni `actualizar.py` como flujo oficial de actualizaciones.** El sistema de pruebas descrito aquí sigue siendo válido; la documentación actual y la arquitectura objetivo están en `README.md` y `docs/ARQUITECTURA-OBJETIVO.md`.
+
 ## Alcance de esta entrega
 
 Todavía no se conecta la app Android ni se abre el router. Esta entrega añade una autoprueba ejecutable en la PC, sin iniciar una sesión Google ni crear un estado persistente. No es una implementación de descubrimiento de IP dinámica. No añade servicios externos, cuotas de hosting, dependencias nuevas ni GitHub Actions.
@@ -14,9 +16,11 @@ La versión anterior ocultaba la dirección cuando la longitud era /64, pero con
 
 `Red-Resumen.ps1` contiene la transformación independiente. `Probar-Resumen-Red.ps1` añade nueve comprobaciones con direcciones de documentación, incluido /128, enlaces locales con zona y IPv4 /32. Se ejecutan en Windows desde `Preparar` o `Pruebas`, sin Pester y sin consultar adaptadores. Estas nueve comprobaciones PowerShell todavía no han sido ejecutadas en Windows por el asistente.
 
-## Actualización sin borrar datos
+## Actualización por ZIP: mecanismo anterior, ahora obsoleto
 
-El paquete de entrega incluye `release-manifest.json`, generado junto al ZIP, con hashes del contenido nuevo y del código anterior conocido. El actualizador `actualizar.py` no necesita FastAPI ni instalar paquetes: usa la biblioteca estándar de Python.
+Esta sección describe únicamente el método anterior y se conserva como evidencia histórica de las pruebas de la etapa 02. El repositorio privado Git lo sustituyó. **No descargar ZIP ni ejecutar `actualizar.py` para la instalación actual.** Antes de retirar definitivamente el código legado, revisar que no haya dependencias y ejecutar las pruebas en Windows.
+
+En aquella entrega, el paquete incluía `release-manifest.json`, generado junto al ZIP, con hashes del contenido nuevo y del código anterior conocido. El actualizador `actualizar.py` no necesita FastAPI ni instalar paquetes: usa la biblioteca estándar de Python.
 
 Ejecutarlo indicando el ZIP, su SHA-256 publicado por separado y el destino. Antes de reemplazar un archivo revisa todo el paquete, sus rutas y cada archivo existente. Acepta el contenido anterior conocido o el nuevo; si encuentra modificaciones personales, aborta antes de sobrescribir. Conserva `.venv`, archivos desconocidos y estado/certificados fuera del código. No borra documentos, backups o carpetas de usuario. Hay reversión de los archivos sustituidos si una operación falla durante el proceso; no equivale a una transacción resistente a cortes de luz. Detener el servidor local antes de actualizar.
 
