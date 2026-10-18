@@ -461,3 +461,59 @@ def test_backup_includes_device_key_for_stable_device_identity(tmp_path):
             source.backup(dest)
     assert Database(destination).hearts_for_device(
         'account-a', hashed, 'programming')['available'] == 7
+
+
+@pytest.mark.parametrize('namespace,values', [
+    ('appearance_settings', {
+        'accent_red': 89, 'accent_green': 240, 'accent_blue': 252,
+        'route_allow_global_accent_overwrite_programming': False}),
+    ('code_wrap_settings', {'global_wrap': True, 'course_wrap_cpp1': False}),
+    ('keyboard_shortcut_settings', {'cpp_shortcuts': '["(", ")", "::", "++"]'}),
+    ('learning_flow_settings', {
+        'global_between_lessons': False, 'course_override_cpp1_swipe_finish': True}),
+    ('lesson_text_size_settings', {'global_scale': 125, 'course_use_global_cpp1': False}),
+    ('ui_language_settings', {'selection': 'fr'}),
+    ('lesson_narration_settings', {
+        'enabled': True, 'engine': 'KOKORO', 'rate': 1.5,
+        'kokoro_voice': 'ef_dora', 'language': 'fr'}),
+])
+def test_allowed_android_portable_preferences_round_trip(database, namespace, values):
+    db, _ = database
+    saved = db.save_settings('google-user', namespace, 0, values)
+    assert saved['revision'] == 1
+    assert saved['values'] == values
+    row = db.settings('google-user')['settings'][0]
+    assert row['namespace'] == namespace
+    assert row['values'] == values
+
+
+def test_upgrade_v2_preserves_settings_and_completions(tmp_path):
+    import sqlite3
+    path = tmp_path / 'v2.db'
+    old = Database(path, clock=lambda: 1800000000000)
+    old.complete('existing', 'lesson', 'cpp1', 'l1')
+    old.save_settings('existing', 'ui_language_settings', 0, {'selection': 'fr'})
+    with sqlite3.connect(path) as previous_schema:
+        previous_schema.execute('UPDATE schema_version SET version=2')
+        previous_schema.execute('DROP TABLE device_hearts')
+        previous_schema.execute('DROP TABLE device_receipts')
+    reopened = Database(path, clock=lambda: 1800000000000)
+    assert reopened.progress('existing')['completed'][0]['item'] == 'l1'
+    assert reopened.settings('existing')['settings'][0]['values'] == {'selection': 'fr'}
+    with sqlite3.connect(path) as upgraded:
+        assert upgraded.execute('SELECT version FROM schema_version').fetchone() == (3,)
+
+
+def test_production_hearts_require_a_device_id_even_with_valid_identity(tmp_path):
+    class TestVerifier:
+        def verify(self, token):
+            return 'google-account'
+    settings = Settings(tmp_path / 'runtime', testing=False, project_id='test-project')
+    with TestClient(create_app(settings, verifier=TestVerifier()),
+                    base_url='https://127.0.0.1', client=('127.0.0.1', 50123)) as c:
+        headers = {'Authorization': 'Bearer qa-identity'}
+        assert c.get('/v1/hearts/programming', headers=headers).status_code == 422
+        assert c.post('/v1/hearts/debits', headers=headers, json={
+            'route': 'programming', 'operation_id': str(uuid4())}).status_code == 422
+        headers['X-Android-Id'] = '0123456789abcdef'
+        assert c.get('/v1/hearts/programming', headers=headers).json()['available'] == 8
