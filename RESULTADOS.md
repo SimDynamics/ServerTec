@@ -60,3 +60,62 @@ Este paso no modifica `servertec.py`, el esquema SQLite, las reglas de corazones
 la API, dependencias, Android, Honor, LDPlayer ni la publicación en Google Play.
 Los endpoints heredados de ajustes continúan presentes; su comprobación QA no activa
 sincronización en Android ni cambia la decisión de mantener allí los ajustes locales.
+
+## Paso 2: motor de referencia para recuperación y cartera offline
+
+Base remota: `1b3c22a3de2ca9b5f23b401ce2f4605233f688f9`.
+**Confirmación recibida del usuario en Windows para esa base:** 84 pruebas
+aprobadas, 1 omitida y 1 aviso de deprecación; autoprueba HTTPS 9/9.
+
+Se añaden `offline_hearts.py` y `test_offline_hearts.py`. Son un modelo ejecutable
+Python y pruebas para fijar las reglas del futuro cliente Android, **no código
+Kotlin ya integrado ni una nueva API de sincronización**. El servicio no importa
+este módulo; no se modifican `servertec.py`, las tablas de producción, dependencias,
+rutas D/E, ajustes ni Premium. Todo el almacenamiento nuevo de las pruebas es temporal.
+
+El motor calcula la recuperación bajo demanda, incluso desde saldo cero sin red,
+con los máximos existentes de 8/12 y sin acumular tiempo extra al estar lleno.
+Usa muestras monotónicas del mismo arranque; si cambia el marcador de arranque,
+usará una diferencia positiva del reloj civil, marcada como estimación no verificada.
+Una hora manipulada tras reiniciar no queda mágicamente validada: esa concesión
+aceptada en la planificación permanece visible. Un contador monotónico que retrocede
+no acredita tiempo dos veces. El marcador de arranque aún debe obtenerse y probarse
+en el adaptador Android; no basta con comparar si el contador actual es menor.
+
+La cartera separada guarda consumo y recibo pendiente en una transacción antes de
+retornar. Repetir el mismo UUID no vuelve a cobrar; un recibo antiguo no se aplica
+como saldo actual. Las consultas de visualización no escriben ni generan envíos.
+Un estado local ausente exige restauración verificada, no crea vidas automáticamente.
+La función de inicialización requiere esa verificación por parte del futuro adaptador;
+el modelo no autentica cuentas ni acredita por sí solo respuestas del servidor.
+
+Validación ejecutada aquí: Linux / Python 3.13.5 / pytest 9.0.2.
+
+```
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -X dev -m pytest test_offline_hearts.py -q -p no:cacheprovider -W error::ResourceWarning
+```
+
+**65 pruebas nuevas aprobadas.** Incluyen límites temporales, conservación de la
+fracción de recarga, arranque nuevo con uptime mayor que el anterior, reloj adelantado
+y atrasado, recarga offline desde cero, reapertura de SQLite, datos borrados o corruptos,
+reintentos concurrentes, separación de cuentas/rutas, rechazo de bases ajenas,
+fallo transaccional y salida abrupta REAL de un proceso entre consumo y recibo.
+Dos secuencias deterministas de 1.000 operaciones se contrastan con un cálculo
+independiente. Se comprueba el cierre explícito de todas las conexiones reteniendo
+referencias para que el recolector no oculte fugas.
+
+**No se ejecutó de nuevo aquí toda la batería del servidor ni Windows/PowerShell,
+Honor o LDPlayer.** La batería `Pruebas` del usuario recogerá automáticamente los
+nuevos tests después del Pull. La autoprueba HTTPS existente no cambia.
+
+Antes de integrar: revisión independiente de Codex sobre conciliación de recargas
+locales y recibos pendientes. Aún no hay transporte, confirmación/borrado de pendientes,
+restauración tras pérdida de datos ni resolución entre dispositivos. Enviar estos
+recibos a `/v1/hearts/debits` tal como está no demuestra una conciliación correcta.
+Los pendientes jamás recibidos no pueden darse por conocidos por ServerTec. No se
+promete que este motor por sí solo resuelva ese caso ni que detecte toda manipulación.
+
+Referencias técnicas consultadas para este paso:
+* https://developer.android.com/reference/kotlin/android/os/SystemClock
+* https://developer.android.com/reference/android/provider/Settings.Global#BOOT_COUNT
+* https://docs.python.org/3.13/library/sqlite3.html#how-to-use-the-connection-context-manager
