@@ -124,3 +124,71 @@ def test_ignore_unsupported_packet_links(tmp_path):
     packets, stats = read_pcapng(path)
     assert packets == []
     assert stats['unsupported_interfaces'] == 1
+
+
+def test_direction_summary_distinguishes_outbound_browser_from_inbound_server():
+    own = SERVER_V4
+    visitor = REMOTE_GLOBAL
+    packets = [
+        TcpPacket(own, visitor, 50555, 443, 10, 0, 2, 4),
+        TcpPacket(visitor, own, 443, 50555, 99, 11, 18, 4),
+        TcpPacket(visitor, own, 41414, 443, 100, 0, 2, 4),
+        TcpPacket(own, visitor, 443, 41414, 200, 101, 18, 4),
+    ]
+    report = analyze(packets)
+    summary = report['clasificacion_por_direccion']['ipv4']
+    assert report['status'] == 'syn_recibido_y_synack_enviado_sin_ack_final_observado'
+    assert summary['pc_como_cliente_https_saliente']['flags']['syn'] == 1
+    assert summary['pc_como_cliente_https_respuesta']['flags']['syn_ack'] == 1
+    assert summary['entrada_servidor_desde_ip_global']['flags']['syn'] == 1
+    assert summary['respuesta_servidor_hacia_ip_global']['flags']['syn_ack'] == 1
+    assert sum(group['paquetes'] for group in summary.values()) == 4
+    assert visitor not in str(report)
+
+
+def test_all_outbound_does_not_claim_external_syn_arrived():
+    packets = [
+        TcpPacket(SERVER_V4, REMOTE_GLOBAL, 50444, 443, 100, 0, 2, 4),
+        TcpPacket(REMOTE_GLOBAL, SERVER_V4, 443, 50444, 300, 101, 18, 4),
+    ]
+    report = analyze(packets)
+    assert report['status'] == 'no_se_observo_syn_externo_al_destino_local'
+    groups = report['clasificacion_por_direccion']['ipv4']
+    assert groups['pc_como_cliente_https_saliente']['paquetes'] == 1
+    assert groups['pc_como_cliente_https_respuesta']['paquetes'] == 1
+    assert 'entrada_servidor_desde_ip_global' not in groups
+
+
+def test_lan_client_does_not_masquerade_as_external_visitor():
+    packets = [
+        TcpPacket('192.168.1.64', SERVER_V4, 40123, 443, 100, 0, 2, 4),
+        TcpPacket(SERVER_V4, '192.168.1.64', 443, 40123, 300, 101, 18, 4),
+    ]
+    r = analyze(packets)
+    groups = r['clasificacion_por_direccion']['ipv4']
+    assert r['status'] == 'no_se_observo_syn_externo_al_destino_local'
+    assert groups['entrada_servidor_desde_ip_no_global']['flags']['syn'] == 1
+    assert groups['respuesta_servidor_hacia_ip_no_global']['flags']['syn_ack'] == 1
+
+
+def test_ipv6_public_traffic_and_duplicates_are_counted_once():
+    packets = [
+        TcpPacket(REMOTE_GLOBAL_V6, SERVER_V6, 40123, 443, 100, 0, 2, 6),
+        TcpPacket(SERVER_V6, REMOTE_GLOBAL_V6, 443, 40123, 300, 101, 18, 6),
+        TcpPacket(REMOTE_GLOBAL_V6, SERVER_V6, 40123, 443, 100, 0, 2, 6),
+    ]
+    r = analyze(packets)
+    assert r['paquetes_tcp443_sin_duplicados'] == 2
+    assert r['clasificacion_por_direccion']['ipv4'] == {}
+    groups = r['clasificacion_por_direccion']['ipv6']
+    assert groups['entrada_servidor_desde_ip_global']['paquetes'] == 1
+    assert groups['respuesta_servidor_hacia_ip_global']['paquetes'] == 1
+    assert REMOTE_GLOBAL_V6 not in str(r)
+
+
+def test_unknown_local_ip_or_other_listener_is_not_attributed_to_servertec():
+    packets = [TcpPacket('8.8.4.4', '192.168.1.99', 51000, 443, 100, 0, 2, 4)]
+    r = analyze(packets)
+    assert r['status'] == 'no_se_observo_syn_externo_al_destino_local'
+    assert r['clasificacion_por_direccion']['ipv4']['otros_sin_coincidencia_con_ips_listener']['paquetes'] == 1
+    assert '8.8.4.4' not in str(r)

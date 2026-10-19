@@ -209,6 +209,53 @@ def _external_host(addr: str) -> bool:
             and not ip.is_loopback and not ip.is_link_local)
 
 
+
+def _direction(packet: TcpPacket, local_addresses: set[str]) -> str:
+    """Direction relative to the two exact ServerTec listener addresses."""
+    if packet.destination in local_addresses and packet.destination_port == 443:
+        return ('entrada_servidor_desde_ip_global' if _external_host(packet.source)
+                else 'entrada_servidor_desde_ip_no_global')
+    if packet.source in local_addresses and packet.source_port == 443:
+        return ('respuesta_servidor_hacia_ip_global' if _external_host(packet.destination)
+                else 'respuesta_servidor_hacia_ip_no_global')
+    if packet.source in local_addresses and packet.destination_port == 443:
+        return 'pc_como_cliente_https_saliente'
+    if packet.destination in local_addresses and packet.source_port == 443:
+        return 'pc_como_cliente_https_respuesta'
+    return 'otros_sin_coincidencia_con_ips_listener'
+
+
+def _tcp_flags(flags: int) -> str:
+    if flags & RST:
+        return 'rst'
+    if flags & SYN and flags & ACK:
+        return 'syn_ack'
+    if flags & SYN:
+        return 'syn'
+    if flags & FIN:
+        return 'fin'
+    if flags & ACK:
+        return 'ack_u_otros'
+    return 'otros'
+
+
+def summarize_directions(packets: list[TcpPacket], local_addresses: set[str]) -> dict:
+    """Summarize directions and TCP flags without returning client addresses.
+
+    Expects packets already deduplicated by analyze(). Empty IPv4/IPv6 buckets
+    mean no TCP443 packets could be assigned to that IP family.
+    """
+    summary: dict[str, dict] = {'ipv4': {}, 'ipv6': {}}
+    for packet in packets:
+        family = 'ipv4' if packet.ip_version == 4 else 'ipv6'
+        direction = _direction(packet, local_addresses)
+        flags = _tcp_flags(packet.flags)
+        entry = summary[family].setdefault(direction, {'paquetes': 0, 'flags': {}})
+        entry['paquetes'] += 1
+        entry['flags'][flags] = entry['flags'].get(flags, 0) + 1
+    return {family: dict(sorted(buckets.items())) for family, buckets in summary.items()}
+
+
 def analyze(packets: list[TcpPacket], *, v4: str = SERVER_V4,
             v6: str = SERVER_V6) -> dict:
     our_addresses = {str(ipaddress.ip_address(v4)), str(ipaddress.ip_address(v6))}
@@ -268,6 +315,7 @@ def analyze(packets: list[TcpPacket], *, v4: str = SERVER_V4,
         'status': diagnosis,
         'etapas_por_familia': results,
         'paquetes_tcp443_sin_duplicados': len(unique),
+        'clasificacion_por_direccion': summarize_directions(unique, our_addresses),
         'resets_observados': reset_count,
         'acks_entrantes_sin_exigir_handshake': incoming_ack_count,
         'observaciones': [
@@ -276,6 +324,8 @@ def analyze(packets: list[TcpPacket], *, v4: str = SERVER_V4,
             'SYN+SYN-ACK sin ACK final no acredita que la respuesta llego al visitante.',
             'Una conexion TCP completa no prueba HTTPS aceptado ni la pagina visible en Chrome.',
             'No se muestran direcciones de visitantes ni contenido capturado.',
+            'Los paquetes TCP443 pueden pertenecer a conexiones HTTPS iniciadas por esta PC.',
+            'Truncado en Pktmon describe captura parcial, no perdida de conectividad comprobada.',
         ],
     }
 

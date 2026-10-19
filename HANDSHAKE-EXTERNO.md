@@ -109,3 +109,37 @@ analizador, sin adjuntar los archivos `.etl`/`.pcapng`.
 La utilidad incorpora pruebas automáticas locales: `py -3 -m pytest -q
 test_analizar_handshake.py`. Esas pruebas crean paquetes sintéticos y **no
 son una captura real en Windows**.
+
+
+## Resultado de la captura recuperada (43 paquetes)
+
+El propietario recuperó la captura real que antes parecía vacía:
+
+- 43 bloques de paquetes, 31 decodificados como TCP 443 y 23 únicos.
+- 26 paquetes con captura parcial por el límite configurado de 80 bytes.
+- Ningún SYN externo identificado dirigido a las IP de los listeners IPv4/IPv6.
+- La captura podría contener tráfico HTTPS saliente de la propia PC; el reporte
+  anterior no permitía separarlo del tráfico entrante.
+
+**No se necesita repetir Pktmon ahora.** La versión nueva del analizador
+agrega `clasificacion_por_direccion`, con categorías IPv4 e IPv6, entradas
+al servidor, respuestas del servidor, y la PC actuando como cliente HTTPS.
+También resume las banderas SYN/SYN-ACK/ACK/FIN/RST sin revelar direcciones.
+
+Volver a interpretar EXACTAMENTE el mismo archivo local, después de Pull:
+
+```powershell
+py -3 "E:\PersonalFiles\Projects\ServerTec\analizar_handshake.py" --pcapng "D:\Projects\ServerTec\reports\handshake-20261019-133525\captura.pcapng"
+```
+
+Si los 23 paquetes corresponden únicamente a conexiones iniciadas por la PC,
+el siguiente diagnóstico se concentrará en la regla NAT/ACL y la ruta de
+entrada; no en TLS. La ausencia de SYN en una captura local no prueba por sí
+sola que Telmex filtre o que el router descarte todos los intentos.
+
+No enviar ni publicar ETL, PCAPNG o direcciones de visitantes. Compartir solo
+el resumen JSON generado. Los datos y claves reales de ServerTec permanecen
+fuera de esta herramienta.
+
+El módulo incluye cinco pruebas adicionales con paquetes sintéticos;
+ninguna sustituye la comprobación de acceso real desde otra red.
