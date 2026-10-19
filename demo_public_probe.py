@@ -1,4 +1,4 @@
-"""Observe the single YDNS candidate without configuring or publishing anything.
+"""Observe the assigned dynv6 zone without configuring or publishing anything.
 
 DNS, TCP443, system-trusted HTTPS and real Chrome acceptance are independent.
 This process runs on the server PC: its requests never prove another-network
@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+import http.client
 import ipaddress
 import json
 import os
@@ -16,20 +17,17 @@ import socket
 import ssl
 import subprocess
 
-from demo_check import https_get
-
-
-PUBLIC_HOST = "servertec-demo-3.example.invalid"
+PUBLIC_HOST = "servertec-demo.example.invalid"
 MAX_PUBLIC_ADDRESSES = 4
 TCP_TIMEOUT = 3.0
 DNS_MODE = "windows_Resolve-DnsName_DnsOnly_NoHostsFile"
 
 # The only target is a constant, not interpolated shell input. No host file,
-# alternate resolver, account, authentication, or YDNS update API is involved.
+# alternate resolver, account, authentication, or dynv6 update API is involved.
 DNS_SCRIPT = r"""
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
-$target = 'servertec-demo-3.example.invalid'
+$target = 'servertec-demo.example.invalid'
 $answers = @()
 foreach ($kind in @('A', 'AAAA')) {
     try {
@@ -186,13 +184,46 @@ def _fresh_status(body: bytes, challenge: str, now: datetime) -> dict:
     return {field: payload[field] for field in ("run_id", "request_id", "server_time_utc")}
 
 
+
+def https_get_system(address: str, port: int, path: str) -> tuple[int, dict[str, str], bytes]:
+    """Request only the public demo over system-trusted TLS, never our private CA.
+
+    This is a Python/OS store probe. It does NOT prove Chrome trusts the chain.
+    No browser trust changes, proxies, client certificates or TLS bypasses.
+    """
+    if _global_address(address) is None or port != 443:
+        raise ValueError("Solo IP global y TCP 443 para la demo")
+    if (not path.startswith("/") or len(path) > 512
+            or any(ord(char) < 33 or ord(char) > 126 for char in path)):
+        raise ValueError("Ruta HTTP no valida")
+    # Explicit context avoids SSLKEYLOGFILE exporting TLS session secrets.
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    context.minimum_version = ssl.TLSVersion.TLSv1_2
+    context.load_default_certs(ssl.Purpose.SERVER_AUTH)
+    if not context.check_hostname or context.verify_mode != ssl.CERT_REQUIRED:
+        raise ValueError("No esta habilitada la verificacion del certificado")
+    with socket.create_connection((address, port), timeout=TCP_TIMEOUT) as plain:
+        with context.wrap_socket(plain, server_hostname=PUBLIC_HOST) as tls:
+            tls.settimeout(TCP_TIMEOUT)
+            tls.sendall(
+                (f"GET {path} HTTP/1.1\r\nHost: {PUBLIC_HOST}\r\n"
+                 "Connection: close\r\nCache-Control: no-cache\r\n\r\n").encode("ascii")
+            )
+            with http.client.HTTPResponse(tls) as response:
+                response.begin()
+                body = response.read(131073)
+                if len(body) > 131072:
+                    raise ValueError("Respuesta HTTPS demasiado grande")
+                return response.status, {key.lower(): val for key, val in response.getheaders()}, body
+
+
 def https_probe(address: str) -> dict:
     if _global_address(address) is None:
         raise ValueError("Solo se prueban direcciones publicas globales")
     result = {"address": address, "trust": "system_certificate_store",
               "hostname": PUBLIC_HOST, "hostname_validation": True}
     try:
-        status, headers, body = https_get(address, 443, "/", None, hostname=PUBLIC_HOST)
+        status, headers, body = https_get_system(address, 443, "/")
         if (status != 200 or "text/html" not in headers.get("content-type", "")
                 or b"<title>LearnGraphicsProgramming</title>" not in body
                 or "no-store" not in headers.get("cache-control", "").split(", ")):
@@ -200,8 +231,8 @@ def https_probe(address: str) -> dict:
         responses = []
         for _ in range(2):
             challenge = secrets.token_hex(24)
-            status, headers, body = https_get(
-                address, 443, "/demo/status?challenge=" + challenge, None, hostname=PUBLIC_HOST)
+            status, headers, body = https_get_system(
+                address, 443, "/demo/status?challenge=" + challenge)
             if (status != 200 or "application/json" not in headers.get("content-type", "")
                     or "no-store" not in headers.get("cache-control", "").split(", ")):
                 raise ValueError("Respuesta JSON HTTPS no valida")

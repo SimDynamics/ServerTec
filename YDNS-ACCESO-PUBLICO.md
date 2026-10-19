@@ -1,3 +1,7 @@
+# Estado posterior: nombre dynv6 registrado
+
+El propietario registro `servertec-demo.example.invalid` el 2026-10-19. Consultar [DYNV6-ACCESO-PUBLICO.md](DYNV6-ACCESO-PUBLICO.md). El resto de este archivo documenta historicamente por que se descarto YDNS.
+
 # DNS publico: YDNS no admite altas nuevas y evaluacion de reemplazo
 
 ## Correccion verificada el 2026-10-19
