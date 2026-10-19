@@ -1,0 +1,25 @@
+:root { color-scheme: dark; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #eaf1ff; background: #0c1220; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; padding: 42px 18px; background: radial-gradient(ellipse at top, #182a47, #0c1220 65%); }
+.menu { width: min(100%, 680px); margin: 0 auto; }
+.eyebrow { color: #99baff; letter-spacing: .16em; font-size: .75rem; font-weight: 700; margin: 0 0 14px; }
+h1 { font-size: clamp(1.35rem, 4.7vw, 2.35rem); letter-spacing: -.045em; line-height: 1.2; margin: 0; overflow-wrap: anywhere; }
+.intro { color: #b8c7df; font-size: 1.05rem; margin: 14px 0 28px; }
+.routes { display: grid; gap: 14px; }
+button { font: inherit; cursor: pointer; border-radius: 14px; border: 1px solid #344a6c; color: inherit; }
+.routes button { background: #17263c; min-height: 90px; padding: 18px 22px; display: grid; grid-template-columns: 42px 1fr auto; gap: 16px; align-items: center; text-align: left; font-weight: 650; font-size: 1.08rem; }
+.routes button:hover { background: #213653; border-color: #81a8ed; }
+.symbol { font-size: 1.5rem; color: #9ebfff; text-align: center; }
+button:focus-visible { outline: 3px solid #a8c6ff; outline-offset: 4px; }
+button:disabled { cursor: wait; opacity: .7; }
+.route-message { color: #d5e4ff; min-height: 2.8em; margin: 16px 0 8px; line-height: 1.5; }
+.connection { border: 1px solid #2c3f5c; border-radius: 16px; padding: 24px; background: #111d30; }
+h2 { margin: 0; font-size: 1.1rem; }
+.connection p { color: #b8c7df; line-height: 1.5; }
+.check { background: #376ad1; border-color: #6891e1; font-weight: 650; padding: 13px 18px; }
+.check:hover { background: #4378e5; }
+.result { color: #c6d4eb; margin-top: 18px; line-height: 1.6; font-size: .9rem; white-space: pre-line; overflow-wrap: anywhere; }
+.result[data-state="ok"] { color: #a1e9c5; }
+.result[data-state="error"] { color: #ffb9b9; }
+footer, noscript { display: block; font-size: .82rem; color: #9aabc5; line-height: 1.6; margin-top: 24px; }
+@media (max-width: 420px) { body { padding-top: 28px; } .routes button { padding: 16px; gap: 10px; grid-template-columns: 32px 1fr auto; font-size: 1rem; } .connection { padding: 20px; } }

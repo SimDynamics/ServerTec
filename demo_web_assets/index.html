@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>LearnGraphicsProgramming</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/menu.css">
+  <script src="/menu.js" defer></script>
+</head>
+<body>
+  <main class="menu">
+    <p class="eyebrow">DEMOSTRACIÓN WEB</p>
+    <h1>LearnGraphicsProgramming</h1>
+    <p class="intro">Elige una ruta para explorar.</p>
+    <div class="routes">
+      <button type="button" data-route="programming"><span class="symbol" aria-hidden="true">&lt;/&gt;</span><span>Programación</span><span aria-hidden="true">→</span></button>
+      <button type="button" data-route="math_physics"><span class="symbol" aria-hidden="true">∑</span><span>Matemáticas y Física</span><span aria-hidden="true">→</span></button>
+    </div>
+    <p id="route-message" class="route-message" role="status" aria-live="polite"></p>
+    <section class="connection" aria-labelledby="connection-title">
+      <h2 id="connection-title">Conexión con el servidor</h2>
+      <p>Comprueba que esta página puede recibir una respuesta nueva.</p>
+      <button id="check-connection" class="check" type="button">Comprobar conexión</button>
+      <div id="connection-result" class="result" role="status" aria-live="polite">Aún no se ha comprobado la conexión.</div>
+    </section>
+    <noscript>Activa JavaScript para probar los botones y comprobar la conexión.</noscript>
+    <footer>Menú de demostración. El contenido de las rutas todavía no está integrado.</footer>
+  </main>
+</body>
+</html>

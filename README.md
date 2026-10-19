@@ -4,6 +4,13 @@ Servidor propio para LearnGraphicsProgramming. Código aislado de Android. **No 
 
 ## Ubicación y alcance
 
+**Menú web aislado:** [DEMO-WEB.md](DEMO-WEB.md) conserva la QA local anterior.
+El objetivo vigente es acceso público normal sin preparar visitantes y sin pagos
+presentes ni futuros. [EVALUACION-ACCESO-PUBLICO.md](EVALUACION-ACCESO-PUBLICO.md)
+documenta la investigación actual: no se ha acreditado una combinación compatible
+de nombre, certificado y continuidad; no se integra un servicio provisional.
+No hay publicación pública ni validación externa en Chrome confirmadas.
+
 **Repositorio actual:** `SimDynamics/ServerTec` (privado, rama `main`), independiente de `SimDynamics/LearnGraphicsProgramming`. **Copia local:** `E:\PersonalFiles\Projects\ServerTec`. La migración por Git y la retirada de `server/ServerTec` del árbol `main` de la app ya se completaron. El repositorio público de recursos no participa. Claves privadas, certificados y SQLite permanecen fuera del código.
 
 Esta implementación usa Python 3.13+, FastAPI, Uvicorn, SQLite, cryptography y PyJWT. Son herramientas ejecutadas en tu equipo, sin suscripción de hosting ni cuota de operaciones de un proveedor. **No es el ejemplo previo en ASP.NET/C#: es una implementación Python independiente que se ha podido ejecutar y probar en este entorno.** No es un servicio de FastAPI alojado. La descarga de dependencias usa el registro de paquetes; el servidor no depende de ese registro después de instalarlas.

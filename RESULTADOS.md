@@ -1,5 +1,256 @@
 # Resultados verificados de ServerTec
 
+## 2026-10-19 — Evaluación pública autorizada, sin pagos futuros
+
+La nueva instrucción sustituye la obligación del nombre privado y la preparación
+de visitantes. Permite investigar nombre público y CA reconocida, manteniendo
+PC/datos locales y la condición económica estricta. Las decisiones privadas de
+las secciones inferiores son **históricas**, no restricciones aún vigentes.
+
+Se revalidó raíz real E:\PersonalFiles\Projects\ServerTec, rama main y HEAD
+ec0abbc444ddb99841390a4c0ffa4916aa5baa49, y se conservaron todos los cambios
+existentes. No se hicieron operaciones Git de escritura ni repositorios nuevos.
+En esta ejecución solo cambió documentación: README.md, DEMO-WEB.md, este archivo
+y el nuevo EVALUACION-ACCESO-PUBLICO.md. No hubo integración externa ni cambios
+del código, dependencias, backend, PKI, Android, Work, Premium o datos reales.
+
+Conclusión: **no se ha verificado una combinación compatible**, sin afirmar la
+inexistencia universal de alternativas. El nombre candidato deSEC/dedyn.io no
+puede darse por obtenido: su aviso vigente suspende nuevas asignaciones. Google
+Public CA es técnicamente apta y anuncia solicitudes sin cargo, pero CP/CPS TLS
+6.10 §9.1.1 permite cargos de emisión, gestión y renovación. No se asume gratuidad
+comercial futura ni sustitución posterior por pago/otro proveedor gratuito.
+También se contrastaron otras ofertas, con sus condiciones y límites; fuentes
+y brechas concretas en EVALUACION-ACCESO-PUBLICO.md.
+
+No se crearon cuentas, aceptaron acuerdos, solicitaron certificados, asignaron
+nombres, activó facturación ni adquirió compromiso de contratación. Tampoco se
+modificaron firewall/router/hosts/confianza, publicaron rutas de negocio o
+instalaron clientes ACME/DDNS, servicios, tareas o automatizaciones provisionales.
+
+Pruebas NUEVAS realmente ejecutadas en Windows/Python3.13.2 con estado temporal:
+
+```powershell
+$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'
+powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\PersonalFiles\Projects\ServerTec\Demo-Web.ps1' -Accion Pruebas
+powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\PersonalFiles\Projects\ServerTec\ServerTec.ps1' -Accion AutoPrueba
+```
+
+Resultado demo: **171 passed en 8,27 s**. Backend original: **AutoPrueba 9/9**,
+HTTPS, proceso y SQLite reales de QA; estado temporal eliminado. No se abrió
+ninguna SQLite real. No se presenta la batería histórica completa como ejecutada
+ahora y no se usaron fixtures que crearan repositorios Git.
+
+`Diagnostico-Demo-Externa.ps1` terminó correctamente en solo lectura, sin avisos.
+Instantánea 2026-10-19T14:15:04Z: Ethernet2 198.51.100.10/24 DHCP, gateway
+198.51.100.1; IPv6 estable candidata 2001:db8:feed::10/64 y
+temporal nueva 2001:db8:feed::12; rutas por defecto de ambas
+familias; perfil Public, firewall activo y entrada Block. **Sin listeners443 ni
+proceso de demo activo**. El PID3488 descrito antes ya no está sirviendo; esta
+ejecución no lo detuvo. No se instalaron servicios/tareas ni entradas portproxy.
+
+State D, repo y LOCALAPPDATA siguen ausentes; solo se comprobó existencia. No se
+inicializó estado ni leyó/regeneró claves. La configuración IPv4 WAN/CGNAT,
+entrada router y llegada externa siguen desconocidas; IPv6 local no es evidencia
+de compatibilidad universal. Se documentaron los fallos de continuidad actuales:
+sin autoarranque tras reinicio, sin actualización DNS y sin renovación pública.
+
+Estado actual: **funciona localmente en pruebas**; listener detenido.
+**Preparado para prueba externa pública: NO. Confirmado públicamente en Chrome
+sin preparar al visitante: NO.** Se mantiene la condición económica solicitada,
+sin rebajarla ni ofrecer una solución de pago o privada como sustituto.
+
+## 2026-10-19 — Continuación y alcance público comercial
+
+El usuario inició la demo loopback y pidió continuar hasta acceso desde Chrome
+para cualquier usuario Android/Windows, sin preparar su dispositivo. No se
+reinterpreta ese objetivo como whitelist de una IP de prueba ni como un teléfono
+con CA/DNS instalados previamente.
+
+Se comprobó otra vez raíz real, main, HEAD ec0abbc444ddb99841390a4c0ffa4916aa5baa49
+y cambios locales de la entrega anterior. Se preservaron todos. El proceso del
+usuario PID3488 sigue en 127.0.0.1:443, ejecutable Python313 real, sin detenerlo
+ni reiniciarlo. El comando absoluto desde otra ubicación:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\PersonalFiles\Projects\ServerTec\Demo-Web.ps1' -Accion Comprobar
+```
+
+pasó las cuatro comprobaciones; run_id `81cd8b3eda7c510b0b6700b1b950cb28`, hora
+observada `2026-10-19T06:14:20.368610Z`. Es la misma ejecución que luego confirmó
+el usuario. `dns_or_chrome_verified` sigue false. Se corrigió la documentación
+para evitar el error de -File relativo en una segunda consola con otro cwd.
+
+Diagnóstico adicional de solo lectura: direcciones/rutas Ethernet2 sin cambios,
+perfil Public, firewall efectivo activo con entrada Block, sin elevación actual.
+El panel HTTP del router cargó en navegador la pantalla de login Sercomm GPON;
+la foto identifica FG6122TM. No se usaron contraseñas de la etiqueta ni se inició
+sesión, cambió router, abrió firewall, editó hosts o instaló confianza.
+
+Bloqueo DNS/trust confirmado antes de afirmar disponibilidad pública:
+
+- [IANA](https://data.iana.org/TLD/tlds-alpha-by-domain.txt), lista versión2026101800,
+  no incluye DYNAMICS. Se consultó también su base de la zona raíz.
+- Resolve-DnsName dynamics. NS y learngraphicsprogramming.dynamics. A con DNS
+  normal, sin hosts, devolvieron DNS_ERROR_RCODE_NAME_ERROR.
+- El [modelo oficial de confianza de Chrome](https://chromium.googlesource.com/chromium/src/+/main/net/data/ssl/chrome_root_store/faq.md)
+  requiere una CA reconocida o confianza local; generar nuestra CA no modifica
+  la confianza de Chrome de otros usuarios.
+
+Por tanto, no es posible cumplir acceso universal sin preparar clientes a la URL
+exacta privada y con CA propia de la solicitud inicial. Se solicitó autorización
+para evaluar el cambio de esas dos restricciones, conservando el servidor local
+y sin comprar, contratar o publicar nada. No se eligieron proveedor o dominio
+sustitutos ni se presentó la conectividad del router como remedio de DNS/trust.
+El usuario respondió expresamente «Mantener las restricciones originales».
+Se conserva esa decisión: acceso universal sin preparación BLOQUEADO por
+incompatibilidad de nombre privado/CA propia con Chrome sin configurar.
+No se reitera la solicitud ni se abre red como supuesto cumplimiento.
+
+Se añadió Diagnostico-Demo-Externa.ps1 como herramienta exclusivamente de lectura
+y borradores, sin acciones Aplicar/Retirar ni conexiones nuevas. `-AccesoGeneral`
+identifica explícitamente un borrador para todas las IP solo en TCP443/IPinterfaz/
+programa concretos, nunca autorización ni apertura ejecutada. Las plantillas
+restringidas previas son opcionales y no representan el objetivo general.
+La aclaración queda también al inicio de DEMO-WEB.md. No se repitió la batería
+Python por un cambio exclusivamente de documentación/diagnóstico PowerShell.
+Se ejecutó el nuevo script con PowerShell5.1 real: diagnóstico sin parámetros,
+borrador general IPv6, borrador restringido opcional con origen sintético sin
+conectarse, IPv4 sin WAN (sin plan) y rechazo de origen privado. Todos dieron el
+resultado esperado. Se comprobó sintaxis, ASCII compatible y git diff --check.
+La revisión conservadora de reglas no declara sus candidatas como permisos
+efectivos de Python. Al cierre siguen 0 reglas de demo y PID3488 intacto.
+
+## 2026-10-19 — Demo web exclusivamente local, Windows real
+
+Repositorio `E:\PersonalFiles\Projects\ServerTec`, `main` local, HEAD inicial y
+final `ec0abbc444ddb99841390a4c0ffa4916aa5baa49`. Árbol inicialmente limpio;
+entrega sin staging, commits, ramas ni operaciones de red Git en este checkout.
+Solo se añaden archivos de la demo y se amplía documentación. Backend, contratos,
+catálogo, dependencias, Android y Work no cambiaron.
+
+Entorno realmente utilizado: Windows, PowerShell 5.1 (wrapper), Python **3.13.2**,
+OpenSSL **3.0.15**, cryptography **46.0.4**, FastAPI **0.128.2**, Uvicorn **0.48.0**,
+httpx **0.28.1**, pytest **9.0.2**, dependencias ya presentes en `.venv`.
+
+### Resultados ejecutados en esta tarea
+
+Primera ejecución de TODA la batería existente, antes de los archivos nuevos:
+**459 passed, 1 failed, 1 skipped, 26 subtests passed**, 57.78 s. El fallo fue
+`test_import_exercises.py::LocalGitImportTests::test_unpublished_unit_and_symlinked_source_are_rejected`:
+Windows devolvió **WinError 1314**, sin privilegio para `Path.symlink_to` en una
+fuente curricular temporal. No es una prueba aprobada; no se cambió el test ni
+la configuración de seguridad de Windows para ocultarlo. La omisión existente
+es la prueba de enlaces de `test_actualizar.py`, que sí contempla esa limitación.
+
+Última batería, con los archivos finales de la demo y excluyendo expresamente
+SOLO ese caso que necesita privilegio del sistema:
+
+```powershell
+$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
+.\.venv\Scripts\python.exe -X dev -m pytest -q -p no:cacheprovider -o faulthandler_timeout=40 -W error::ResourceWarning -W error::pytest.PytestUnraisableExceptionWarning --deselect=test_import_exercises.py::LocalGitImportTests::test_unpublished_unit_and_symlinked_source_are_rejected
+```
+
+**630 passed, 1 skipped, 1 deselected, 26 subtests passed**, 61.55 s.
+No se presenta como una pasada íntegra sin excepciones. Quedó un aviso de
+obsolescencia Starlette/AnyIO sobre `BlockingPortal`; ningún ResourceWarning ni
+excepción de limpieza ignorada en la pasada final.
+
+Pruebas enfocadas finales de demo, ejecutadas mediante el wrapper PowerShell:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Demo-Web.ps1 -Accion Pruebas
+```
+
+**171 passed**, 6.64 s: 119 del listener/recursos, 49 de PKI y 3 de transporte y
+procesos. Se verificó whitelist literal, métodos, traversal, Host, forwarding,
+cuerpos/cabeceras, límites, ausencia de imports de negocio/SQLite, CSP/no-store,
+ausencia de referencias externas y service workers, challenge/ejecución/petición,
+ACL de claves, SAN exacto, cadena canónica y huellas DER/PEM diferenciadas.
+
+Las pruebas TLS usan sockets reales y verifican autoridad y nombre; rechazan CA
+ajena, nombre incorrecto, otros DNS, descendientes e IP de ambas familias.
+Hay controles causales: raíz con la misma identidad pero sin NameConstraints,
+manteniendo la intermedia restringida; siguen rechazándose nombres/IP ajenos.
+Al retirar ambas restricciones en certificados exclusivamente temporales, esos
+controles aceptan los nombres; así se verifica la causa del rechazo. No equivale
+a una ejecución del Chrome Android real.
+
+Se comprobó reinicio con otro run_id, cierre del árbol del proceso propio y un
+listener ajeno que sigue disponible; un puerto ya ocupado hace fallar el arranque
+sin detener su propietario. Se corrigió durante QA el cierre del launcher Python
+de Windows para que las pruebas detengan también su hijo; la operación normal
+documentada es primer plano y Ctrl+C. No hay servicios ni tareas nuevos.
+
+Prueba adicional FINAL con material persistente propio separado:
+`D:\Projects\ServerTec\demo-web-20261019`, cadena raíz → intermedia → hoja,
+listener real **127.0.0.1:443**, SNI **learngraphicsprogramming.dynamics**.
+Se ejecutó `Demo-Web.ps1 -Accion Comprobar`, con cadena/nombre estrictos y sin
+hosts, proxies ni omisión de errores de certificado:
+
+- Menú y CSS/JS: 200 con recursos locales y no-store.
+- Dos respuestas de estado frescas, eco correcto y request_id diferentes.
+- Archivos privados, docs y negocio: 404; nombre TLS incorrecto: rechazado.
+- run_id: `1fc9532ea881be2ea6e74aaa1c51b9d4`.
+- Hora UTC de respuesta: `2026-10-19T06:06:32.846537Z`.
+- Al detener el árbol propio: **cero listeners TCP443**, confirmado por Windows.
+
+La clave de raíz e intermedia del material final no se conservó (`--one-shot`),
+solo la clave de ejecución protegida por ACL. No hay claves nuevas dentro de Git.
+No se instalaron autoridades de confianza. La huella SHA-256 del certificado
+raíz DER es `dc4823f93b922cb013b98f183d9d09bc2aac19cf6c036caaace71b33f2d9501e`.
+La hoja y la intermedia caducan `2026-10-26T05:59:59Z`.
+
+También se ejecutaron:
+
+- `ServerTec.ps1 -Accion AutoPrueba`: **9/9**, HTTPS/SQLite/proceso reales con estado
+  temporal eliminado; arranque original y reglas QA históricas preservados.
+- `Probar-Resumen-Red.ps1`: **9/9**, resumen sin consultar adaptadores.
+- `python -m py_compile demo_web.py demo_pki.py demo_check.py`: correcto.
+- `git diff --check`: correcto; HEAD y rama sin cambios.
+
+No se inicializó ni abrió estado real: las rutas D, E y LOCALAPPDATA documentadas
+de `state` se comprobaron ausentes. No se copiaron SQLite abiertas ni se tocaron
+claves/certificados anteriores. Se comprobó al cierre: **0 reglas firewall demo**,
+**sin entrada hosts demo**, **sin proceso demo ni listener443 de esta entrega**.
+
+### Límites y pendientes explícitos
+
+**Funciona localmente** por transporte TLS y pruebas; **software preparado para
+prueba externa**, pero sin exposición activada; **confirmado desde otra red: NO**.
+No se atribuyen a esta ejecución las antiguas «461 pruebas» como si fueran la
+pasada de Windows actual; los resultados anteriores se conservan debajo.
+
+Solo lectura de red: IPv4 privada 198.51.100.10, IPv6 global candidata, rutas de
+ambas familias y TCP443 disponible. Windows perfil Public, entrada predeterminada
+Block, sin regla específica de la demo. WAN IPv4/CGNAT, reglas/router TCP443 y
+compatibilidad de la red externa siguen sin determinar. HTTP de solo lectura a
+la puerta de enlace devolvió 400; no se autenticó ni cambió el router.
+
+Chrome instalado: **155.0.8059.84**. Registro sin políticas relevantes de
+certificados/DNS/HTTPS encontradas; política efectiva, importación de confianza,
+validación TLS y ejecución visual/JavaScript en Chrome **no comprobadas**.
+El control automático de interfaz detuvo la inspección al no determinar la URL
+con suficiente confianza. La retirada de la carpeta de perfil temporal se rechazó
+con «blocked by policy», sin motivo más concreto. Chrome se cerró; no se intentó
+sortear esos controles. Quedan el perfil cerrado sin CA importada y la identidad
+inicial QA no confiada, descritos en DEMO-WEB.md; no hay servicios activos.
+
+El usuario confirmó Windows y Android externos con Chrome. Windows tiene receta
+puntual de hosts y perfil dedicado, pendiente de autorización. Android requiere
+concretar versión y una asociación local de nombre sin root; personalDNSfilter
+se investigó como candidato local, **no se instaló/configuró ni probó**. Instalar
+una CA Android afectaría el usuario/perfil Android, no exclusivamente Chrome;
+se explicó ese alcance y no se solicitó ni aplicó instalación silenciosa.
+La cadena intermedia restringida conserva las restricciones durante su validación,
+sin presentar el comportamiento OpenSSL como aceptación del Chrome del teléfono.
+
+No se abrieron puertos externos, ni se modificaron firewall/router/hosts/DNS/
+confianza. No hubo servicios externos para servir el menú, CA comercial, túnel,
+hosting ni nueva cuenta. No se usó Honor/ADB ni se migró Android/currículo. No se
+afirma seguridad o disponibilidad de producción. Comandos, cambios concretos a
+autorizar, distribución del certificado, clientes y reversión: [DEMO-WEB.md](DEMO-WEB.md).
+
 ## Evaluaciones autorizadas y recibos atómicos
 
 2026-10-19 UTC. Base remota revisada:
