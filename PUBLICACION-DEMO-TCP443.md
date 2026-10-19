@@ -60,6 +60,13 @@ No permitir UDP ni otros puertos; no modificar la administración remota.
 Para IPv6 se requiere regla de entrada en el firewall/ACL del router, TCP443
 hacia 2001:db8:feed::10. IPv6 nativa NO usa NAT IPv4.
 Mostrar captura de la sección NAT/ACL antes de guardar si los campos difieren.
+
+**Persistencia verificada por el propietario en Sercomm:** al crear una regla,
+primero pulsar **Guardar** y luego **Aplicar** en la pantalla de Mapeo de Puertos.
+Si solo se pulsa Guardar, la regla puede aparecer temporalmente y desaparecer
+tras F5. Tras Guardar + Aplicar, el propietario confirmó que ya permanece.
+La persistencia NO demuestra aún que la conexión desde Internet llegue al PC.
+
 Si la LAN cambia por DHCP, actualizar la reserva/destino de forma autorizada.
 
 ## Paso 5. Comprobación desde otra conexión
@@ -69,7 +76,10 @@ Desde otra PC en una red diferente:
     Test-NetConnection 203.0.113.10 -Port 443
     Test-NetConnection '2001:db8:feed::10' -Port 443
 
-Estos comandos solo prueban TCP. Para Chrome usar datos móviles (Wi-Fi apagado).
+Estos comandos solo prueban TCP. Para Chrome sirve cualquier **otra red**,
+incluido el Wi-Fi de otra casa; NO se requieren datos móviles.
+Antes de repetir una captura, confirmar las dos escuchas TCP443 y pedir una prueba
+externa nueva **después de pulsar Guardar y Aplicar** en el router.
 Chrome puede mostrar un error de autoridad, no es prueba de un certificado público.
 No aceptar como éxito comercial un certificado no reconocido ni pedir desactivar
 las protecciones de los visitantes.
