@@ -105,7 +105,7 @@ def _key_usage(*, authority: bool) -> x509.KeyUsage:
     )
 
 
-def _name_constraints(hostname: str = hostname) -> x509.NameConstraints:
+def _name_constraints(hostname: str = HOSTNAME) -> x509.NameConstraints:
     if hostname not in ALLOWED_HOSTNAMES:
         raise ValueError('Nombre PKI no autorizado')
     return x509.NameConstraints(
