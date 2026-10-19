@@ -87,3 +87,12 @@ No se implementó ningún plan de pago, freemium, ni cuota futura.
 
 Estos cambios solo agregan código al repositorio. Ninguna regla de Windows
 ha sido instalada ni probada en ejecución desde esta sesión.
+
+## Diagnostico nuevo: SYN, SYN-ACK y ACK
+
+Los dos paquetes de la prueba anterior con filtro TCP SYN no prueban el ACK final.
+La guia [HANDSHAKE-EXTERNO.md](HANDSHAKE-EXTERNO.md) ofrece una captura breve
+con Pktmon, separada por IPv4/IPv6. El analizador `analizar_handshake.py`
+genera solo un resumen sin direcciones IP de visitantes ni datos capturados.
+Las trazas brutas nunca se suben a Git; el script se probo sobre paquetes sinteticos.
+No cambiar el router ni los servidores existentes para repetir contadores.

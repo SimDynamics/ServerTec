@@ -22,3 +22,7 @@ backups/
 reports/
 network-*.json
 *.zip
+# Capturas de red privadas: no publicar paquetes o metadatos
+*.etl
+*.pcapng
+*.pcap
