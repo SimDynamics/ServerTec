@@ -256,6 +256,52 @@ def summarize_directions(packets: list[TcpPacket], local_addresses: set[str]) ->
     return {family: dict(sorted(buckets.items())) for family, buckets in summary.items()}
 
 
+
+def summarize_ipv6_prefix(packets: list[TcpPacket], server_ipv6: str) -> dict:
+    """Classify the *observed* IPv6 endpoints by the LAN /64 without exposing IPs.
+
+    Same IPv6 prefix does NOT prove a packet belongs to the ServerTec PC;
+    a capture may include another device or a temporary source address.
+    The /64 comes from the user's Ethernet interface diagnostic.
+    """
+    prefix = ipaddress.ip_network(f'{server_ipv6}/64', strict=False)
+    directions = {
+        'origen_dentro_del_prefijo': 0,
+        'destino_dentro_del_prefijo': 0,
+        'ambos_dentro_del_prefijo': 0,
+        'ninguno_dentro_del_prefijo': 0,
+    }
+    ports = {'puerto_443_origen': 0, 'puerto_443_destino': 0}
+    count = 0
+    for packet in packets:
+        if packet.ip_version != 6:
+            continue
+        count += 1
+        source_matches = ipaddress.IPv6Address(packet.source) in prefix
+        target_matches = ipaddress.IPv6Address(packet.destination) in prefix
+        if source_matches and target_matches:
+            directions['ambos_dentro_del_prefijo'] += 1
+        elif source_matches:
+            directions['origen_dentro_del_prefijo'] += 1
+        elif target_matches:
+            directions['destino_dentro_del_prefijo'] += 1
+        else:
+            directions['ninguno_dentro_del_prefijo'] += 1
+        if packet.source_port == 443:
+            ports['puerto_443_origen'] += 1
+        if packet.destination_port == 443:
+            ports['puerto_443_destino'] += 1
+    return {
+        'paquetes_ipv6_unicos': count,
+        'relacion_al_prefijo_ipv6_de_la_red': directions,
+        'posicion_del_puerto_443': ports,
+        'nota': (
+            'La pertenencia al prefijo IPv6 local no identifica un dispositivo concreto. '
+            'El archivo no permite atribuir paquetes a la PC sin otras evidencias.'
+        ),
+    }
+
+
 def analyze(packets: list[TcpPacket], *, v4: str = SERVER_V4,
             v6: str = SERVER_V6) -> dict:
     our_addresses = {str(ipaddress.ip_address(v4)), str(ipaddress.ip_address(v6))}
@@ -316,6 +362,7 @@ def analyze(packets: list[TcpPacket], *, v4: str = SERVER_V4,
         'etapas_por_familia': results,
         'paquetes_tcp443_sin_duplicados': len(unique),
         'clasificacion_por_direccion': summarize_directions(unique, our_addresses),
+        'topologia_ipv6_observada': summarize_ipv6_prefix(unique, v6),
         'resets_observados': reset_count,
         'acks_entrantes_sin_exigir_handshake': incoming_ack_count,
         'observaciones': [
@@ -326,6 +373,7 @@ def analyze(packets: list[TcpPacket], *, v4: str = SERVER_V4,
             'No se muestran direcciones de visitantes ni contenido capturado.',
             'Los paquetes TCP443 pueden pertenecer a conexiones HTTPS iniciadas por esta PC.',
             'Truncado en Pktmon describe captura parcial, no perdida de conectividad comprobada.',
+            'El filtro IP de Pktmon compara origen o destino; si el parser no ve esa IP, verificar formato de captura y prefijos.',
         ],
     }
 

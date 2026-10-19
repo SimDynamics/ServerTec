@@ -192,3 +192,51 @@ def test_unknown_local_ip_or_other_listener_is_not_attributed_to_servertec():
     assert r['status'] == 'no_se_observo_syn_externo_al_destino_local'
     assert r['clasificacion_por_direccion']['ipv4']['otros_sin_coincidencia_con_ips_listener']['paquetes'] == 1
     assert '8.8.4.4' not in str(r)
+
+
+def test_ipv6_prefix_classifies_temporary_local_address_without_exposing_it():
+    # Another IPv6 in the same documented /64 is NOT an exact listener IP.
+    temporary = '2806:103e:14:947::9876'
+    packets = [
+        TcpPacket(temporary, REMOTE_GLOBAL_V6, 50001, 443, 100, 1000, 16, 6),
+        TcpPacket(REMOTE_GLOBAL_V6, temporary, 443, 50001, 1000, 101, 16, 6),
+    ]
+    result = analyze(packets)
+    assert result['status'] == 'no_se_observo_syn_externo_al_destino_local'
+    topology = result['topologia_ipv6_observada']
+    assert topology['paquetes_ipv6_unicos'] == 2
+    assert topology['relacion_al_prefijo_ipv6_de_la_red']['origen_dentro_del_prefijo'] == 1
+    assert topology['relacion_al_prefijo_ipv6_de_la_red']['destino_dentro_del_prefijo'] == 1
+    assert topology['posicion_del_puerto_443']['puerto_443_origen'] == 1
+    assert topology['posicion_del_puerto_443']['puerto_443_destino'] == 1
+    assert temporary not in str(result)
+    assert REMOTE_GLOBAL_V6 not in str(result)
+
+
+def test_ipv6_traffic_outside_local_prefix_is_reported_without_ips():
+    packets = [
+        TcpPacket('2606:4700:4700::1111', '2001:4860:4860::8888',
+                  50443, 443, 200, 5000, 16, 6),
+    ]
+    report = analyze(packets)
+    topology = report['topologia_ipv6_observada']
+    assert topology['relacion_al_prefijo_ipv6_de_la_red']['ninguno_dentro_del_prefijo'] == 1
+    assert topology['posicion_del_puerto_443']['puerto_443_destino'] == 1
+    assert '2606:4700' not in str(report)
+
+
+def test_ipv6_duplicate_frames_not_counted_twice_by_topology():
+    packet = TcpPacket(REMOTE_GLOBAL_V6, SERVER_V6, 51223, 443, 777, 0, 2, 6)
+    report = analyze([packet, packet])
+    topology = report['topologia_ipv6_observada']
+    assert topology['paquetes_ipv6_unicos'] == 1
+    assert topology['relacion_al_prefijo_ipv6_de_la_red']['destino_dentro_del_prefijo'] == 1
+    assert topology['posicion_del_puerto_443']['puerto_443_destino'] == 1
+
+
+def test_ipv4_only_yields_empty_ipv6_topology():
+    packet = TcpPacket(REMOTE_GLOBAL, SERVER_V4, 42000, 443, 777, 0, 2, 4)
+    topology = analyze([packet])['topologia_ipv6_observada']
+    assert topology['paquetes_ipv6_unicos'] == 0
+    assert sum(topology['relacion_al_prefijo_ipv6_de_la_red'].values()) == 0
+    assert sum(topology['posicion_del_puerto_443'].values()) == 0

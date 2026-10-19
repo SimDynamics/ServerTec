@@ -143,3 +143,45 @@ fuera de esta herramienta.
 
 El módulo incluye cinco pruebas adicionales con paquetes sintéticos;
 ninguna sustituye la comprobación de acceso real desde otra red.
+
+
+## Tercera lectura de la MISMA captura: prefijo IPv6 y posicion de TCP 443
+
+El analizador actualizado anteriormente reporto 23 paquetes IPv6 unicos con
+bandera ACK. Todos aparecieron como `otros_sin_coincidencia_con_ips_listener`,
+y no hubo paquetes IPv4 atribuidos al destino local de ServerTec.
+
+La documentacion de Pktmon indica que los filtros -i buscan la direccion tanto
+en origen como en destino. Que el PCAPNG no coincida con la IP exacta de los
+filtros merece una validacion del decodificador y de las direcciones observadas.
+No es evidencia suficiente para responsabilizar al router ni a Telmex.
+
+La nueva seccion `topologia_ipv6_observada` clasifica los mismos paquetes
+por pertenencia al prefijo /64 de Ethernet 2 y por posicion de puerto 443.
+NO muestra direcciones de origen/destino ni identifica dispositivos.
+Estar en el mismo prefijo no prueba que el paquete pertenezca a esta PC.
+
+Despues de hacer Pull, ejecutar una sola vez:
+
+```powershell
+py -3 "E:\PersonalFiles\Projects\ServerTec\analizar_handshake.py" --pcapng "D:\Projects\ServerTec\reports\handshake-20261019-133525\captura.pcapng"
+```
+
+Interpretacion:
+- `origen_dentro_del_prefijo` con `puerto_443_destino` es compatible con
+  una conexion HTTPS saliente de otro equipo/direccion del mismo /64,
+  incluida una direccion temporal. Todavia no permite atribuirla al PC.
+- `destino_dentro_del_prefijo` con `puerto_443_origen` es compatible con
+  paquetes de respuesta para un cliente del mismo prefijo.
+- `ninguno_dentro_del_prefijo` dominante pese a filtros IP exactos sugiere
+  revisar primero la representacion/codificacion de Pktmon. No inventar
+  recepcion de solicitudes externas ni aplicar cambios del router a ciegas.
+
+En caso de discrepancia, el comando nativo `pktmon etl2txt` puede decodificar
+el ETL original y permitir comparar el texto local con el parser PCAPNG;
+la salida cruda debe mantenerse privada. Referencia oficial:
+https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/pktmon-etl2txt
+
+El resumen nuevo incluye cuatro pruebas adicionales sobre paquetes sinteticos.
+No fueron ejecutadas sobre Windows en esta publicacion por Git.
+El certificado privado y las reglas de ServerTec se conservan.
