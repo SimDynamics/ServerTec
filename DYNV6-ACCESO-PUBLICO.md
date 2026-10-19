@@ -2,14 +2,14 @@
 
 ## Estado verificado mediante capturas del propietario (2026-10-19)
 
-- La cuenta dynv6 ya contiene la zona \`servertec-demo.example.invalid\`.
+- La cuenta dynv6 ya contiene la zona `servertec-demo.example.invalid`.
 - URL objetivo: https://servertec-demo.example.invalid/
 - El formulario inicial tenia vacias las casillas IPv4 e IPv6. La captura de zona
   creada NO demuestra la existencia de registros A o AAAA funcionales.
 - No existe prueba de acceso desde red externa ni de un Chrome sin CA instalada.
 - Se conserva el servidor en PC, sin cambiar SQLite, claves, certificados o
   reglas de negocio y sin activar facturacion ni servicios de pago.
-- YDNS sigue descartado: su dominio gratuito \`ydns.eu\` cerro nuevas altas.
+- YDNS sigue descartado: su dominio gratuito `ydns.eu` cerro nuevas altas.
 
 ## Seguridad prioritaria del token de DNS
 
@@ -20,7 +20,7 @@ la automatizacion de la zona cuando corresponda. No pegar el token nuevo ni
 capturar la pantalla con secretos visibles. No guardar claves API en Git,
 logs ni parametros de la linea de comandos.
 
-La API oficial \`https://dynv6.com/docs/apis\` permite actualizar IPv4,
+La API oficial `https://dynv6.com/docs/apis` permite actualizar IPv4,
 IPv6 y prefijos desde un cliente local. Todavia NO se implementa ni activa
 esa actualizacion: primero confirmar direcciones, acceso real y seguridad
 de las credenciales.
@@ -29,11 +29,11 @@ de las credenciales.
 
 En la PC con ServerTec, despues de hacer Pull de este commit:
 
-\`\`\`powershell
+```powershell
 Set-Location -LiteralPath 'E:\PersonalFiles\Projects\ServerTec'
 py -3 .\demo_public_probe.py
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Diagnostico-Demo-Externa.ps1
-\`\`\`
+```
 
 El primer comando comprueba DNS A/AAAA, TCP 443 y HTTPS con confianza
 del sistema en Python. Un fallo de certificado es esperable con nuestra CA
@@ -68,6 +68,6 @@ con esta entrega.
 No modificar firewall, router, servicios, certificados ni base real sin
 revision previa y permiso del propietario. No ejecutar Inicializar.
 
-Pruebas nuevas en esta entrega: archivo \`test_demo_public_probe.py\`
+Pruebas nuevas en esta entrega: archivo `test_demo_public_probe.py`
 incluido para ejecutar localmente. **No se ejecutaron en Windows durante
 esta publicacion remota.** No declarar validado el acceso publico.
