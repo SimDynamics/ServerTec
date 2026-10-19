@@ -58,11 +58,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\ServerTec.ps1 -Accion Veri
 
 Debe confirmar HTTPS con validación de certificado y nombre/IP. El servidor escucha únicamente en `127.0.0.1:8443`. Para detenerlo: Ctrl+C. No se instala todavía como servicio permanente.
 
-## Autenticación y saldo por cuenta: estado actual
+## Autenticación e historiales compartidos: estado actual
 
 La API v2 incorpora usuario y contraseña sin correo, Google/Firebase, sesiones
-revocables y consulta de corazones por identidad persistente. El contrato y sus
-límites están en [AUTENTICACION.md](AUTENTICACION.md).
+revocables e historiales de consumo gratuito compartidos entre cuentas y dispositivos.
+[HISTORIALES.md](HISTORIALES.md) documenta el contrato vigente de corazones y
+confirmaciones. Sustituye las reglas por cuenta y sin ANDROID_ID descritas en
+[AUTENTICACION.md](AUTENTICACION.md); el resto del contrato de autenticación se conserva.
 
 - El servidor genera el identificador interno. El nombre de usuario es único sin
   distinguir mayúsculas. Contraseñas, sesiones, invitaciones y códigos privados
@@ -71,15 +73,21 @@ límites están en [AUTENTICACION.md](AUTENTICACION.md).
   fase de pruebas. Google también exige invitación para cuentas nuevas. Los UID
   Google con datos anteriores a la migración pueden recuperar su identidad
   mediante un token verificado. No se vinculan dos cuentas por correo o nombre.
-- La cuenta tiene 8 corazones en Programación y 12 en Matemáticas/Física. La
-  recuperación se calcula al consultar, con el reloj del servidor. No hay
-  temporizadores por usuario. Cambiar o quitar ANDROID_ID no crea otro saldo.
-- El alta crea ambos saldos dentro de la misma transacción que la cuenta y el
-  consumo de la invitación. Un saldo ausente después del alta produce un error;
-  iniciar sesión o consultar nunca lo reconstruye con vidas nuevas.
-- La migración conserva deudas y progreso anteriores, y deja las tablas viejas
-  como archivo. Cuando existen saldos de varios dispositivos suma sus deudas
-  pendientes, sin volver a contar el snapshot heredado.
+- Cada grupo comparte un único saldo por ruta: 8 corazones en Programación y 12
+  en Matemáticas/Física, con una recuperación por hora calculada al consultar.
+  Cinco cuentas sobre un mismo dispositivo reconocido no producen cinco recargas.
+  No hay temporizadores por usuario ni servicios nuevos con cuotas comerciales.
+- Un dispositivo nuevo de una cuenta conocida requiere confirmación de un uso.
+  Cancelar no une grupos ni modifica corazones. La confirmación caduca y queda
+  vinculada a la sesión, cuenta, dispositivo y grupos afectados.
+- Unir historiales suma sólo deudas independientes, conserva la raíz más antigua
+  y sus alias; nunca concede otro saldo ni comparte credenciales, progreso o Premium.
+- El alta prepara un grupo dentro de la transacción de cuenta e invitación.
+  No puede usarse desde un dispositivo sin asociarlo. Un alta nueva en un
+  dispositivo conocido se une a su grupo y no añade corazones disponibles.
+- La migración copia una sola vez los saldos canónicos anteriores; no vuelve
+  a sumar sus snapshots por dispositivo. Las tablas anteriores quedan como archivo.
+  Un estado faltante o dañado exige reparación; no se repone con vidas nuevas.
 - El acceso local incluye un código privado de recuperación mostrado una vez.
   Recuperar la contraseña conserva identidad y saldo, revoca todas las sesiones
   y exige iniciar sesión de nuevo. También existen cierre de sesión y
@@ -106,11 +114,16 @@ futuro evaluador; por sí sola no aporta validación ni idempotencia de intentos
 | POST | `/v2/auth/password` | Cambiar contraseña con sesión y contraseña actual |
 | POST | `/v2/auth/logout` | Revocar la sesión actual |
 | GET | `/v2/auth/me` | Identidad de la sesión |
-| GET | `/v2/hearts/{route}` | Saldo canónico y próxima recuperación |
+| POST | `/v2/devices/prepare` | Asociar primer dispositivo nuevo o preparar la advertencia |
+| POST | `/v2/devices/confirm` | Aceptar una confirmación válida de un solo uso |
+| POST | `/v2/devices/cancel` | Cancelar sin unir historiales ni cambiar corazones |
+| GET | `/v2/hearts/{route}` | Saldo compartido, grupo vigente y próxima recuperación |
 | GET | `/v2/progress` | Progreso de la identidad canónica |
 
 Las rutas protegidas v2 requieren `Authorization: Bearer <sesión>`.
-No usan ANDROID_ID ni aceptan tokens QA como cuentas reales. Todas las rutas
+Las rutas de dispositivos y corazones requieren además `X-Android-Id`; las de
+identidad y progreso no dependen de esa asociación. No aceptan tokens QA como
+cuentas reales. Todas las rutas
 `/v1/*` quedan retiradas con HTTP 410 cuando `testing=false`.
 Sólo siguen disponibles en el modo QA con credencial aleatoria y origen loopback,
 para conservar las pruebas históricas. Sus descuentos y completados declarados
@@ -120,6 +133,10 @@ La copia consistente `-Accion Respaldo` incluye las nuevas tablas de cuentas,
 sesiones y saldos al respaldar SQLite. Conserva además la clave HMAC heredada
 cuando existe. Este respaldo en el mismo disco todavía no tolera una avería del
 equipo; restaurar una copia antigua puede retroceder datos, sesiones y consumos.
+Para esta fase, detén el servidor antes del respaldo y de actualizar o restaurar.
+Nunca ejecutes versiones antiguas y nuevas simultáneamente sobre el mismo estado.
+La clave HMAC queda fijada al historial: perderla o cambiarla produce un error,
+no nuevos dispositivos con corazones nuevos.
 
 ## IPv6 dinámica: bloqueo de publicación aún abierto
 
@@ -169,4 +186,6 @@ compra y verificación independiente; esta entrega no concede Premium.
 * https://git-scm.com/docs/gitignore
 * https://learn.microsoft.com/en-us/powershell/module/nettcpip/get-netipaddress
 
-Las pruebas de esta entrega se ejecutaron en Linux con Python 3.13; eso no equivale a una prueba en Windows, Honor o LDPlayer. `RESULTADOS.md` identifica exactamente lo comprobado.
+Las pruebas se ejecutan en Linux con Python 3.13; eso no equivale a Windows,
+Honor o LDPlayer. `RESULTADOS.md` conserva los resultados anteriores y
+`HISTORIALES.md` registra las comprobaciones específicas de esta etapa.

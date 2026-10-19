@@ -276,6 +276,16 @@ def test_actual_tls_server_persistence_and_hostname_validation(tmp_path):
                 account_result = registered.json()
                 client.headers['Authorization'] = 'Bearer ' + account_result['access_token']
                 assert client.get('/v2/auth/me').json()['account_id'] == account_result['account_id']
+                client.headers['X-Android-Id'] = '0123456789abcdef'
+                assert client.post('/v2/devices/prepare').json()['status'] == 'linked'
+                assert client.get('/v2/hearts/programming').json()['available'] == 8
+                client.headers['X-Android-Id'] = 'abcdef0123456789'
+                pending = client.post('/v2/devices/prepare').json()
+                assert pending['status'] == 'confirmation_required'
+                assert client.get('/v2/hearts/programming').status_code == 409
+                confirmed = client.post('/v2/devices/confirm', json={
+                    'confirmation_token': pending['confirmation_token']})
+                assert confirmed.status_code == 200
                 assert client.get('/v2/hearts/programming').json()['available'] == 8
                 assert client.post('/v2/auth/logout').status_code == 200
                 assert client.get('/v2/auth/me').status_code == 401
@@ -293,6 +303,7 @@ def test_actual_tls_server_persistence_and_hostname_validation(tmp_path):
     assert password not in output.read_text()
     assert account_result['access_token'] not in output.read_text()
     assert account_result['recovery_code'] not in output.read_text()
+    assert pending['confirmation_token'] not in output.read_text()
 
 
 def test_schema_v1_migrates_without_losing_hearts_or_completions(tmp_path):

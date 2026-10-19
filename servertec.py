@@ -29,6 +29,7 @@ from starlette.concurrency import run_in_threadpool
 from portable_settings import PORTABLE_NAMESPACES, validate_portable_settings
 from accounts import AccountError, AccountStore
 from account_ledger import AccountLedger, LedgerError
+from consumption_groups import GroupLedger
 
 HOUR_MS = 3_600_000
 CAPACITIES = {"programming": 8, "math_physics": 12}
@@ -549,6 +550,10 @@ class PasswordChange(AuthBody):
     new_password: SecretStr = Field(min_length=15, max_length=128)
 
 
+class DeviceConfirmation(AuthBody):
+    confirmation_token: SecretStr = Field(min_length=1, max_length=128)
+
+
 def create_app(settings: Settings, db: Database | None = None, verifier=None,
                accounts: AccountStore | None = None) -> FastAPI:
     settings.validate()
@@ -561,6 +566,8 @@ def create_app(settings: Settings, db: Database | None = None, verifier=None,
     account_store = accounts or AccountStore(
         database, on_enroll=ledger.enroll,
         firebase_project="" if settings.testing else settings.project_id)
+    groups = GroupLedger(database, account_store, ledger, devices)
+    account_store.on_enroll = groups.enroll
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, debug=False)
     app.add_middleware(SmallBodies)
 
@@ -682,9 +689,25 @@ def create_app(settings: Settings, db: Database | None = None, verifier=None,
     def current_account(uid: str = Depends(account_principal)):
         return {"account_id": uid}
 
+    @app.post("/v2/devices/prepare")
+    def prepare_device(request: Request, body: AuthBody | None = None):
+        return groups.prepare(session_token(request), request.headers.get("X-Android-Id"))
+
+    @app.post("/v2/devices/confirm")
+    def confirm_device(body: DeviceConfirmation, request: Request):
+        return groups.confirm(session_token(request), request.headers.get("X-Android-Id"),
+                              body.confirmation_token.get_secret_value())
+
+    @app.post("/v2/devices/cancel")
+    def cancel_device(body: DeviceConfirmation, request: Request):
+        return groups.cancel(session_token(request), request.headers.get("X-Android-Id"),
+                             body.confirmation_token.get_secret_value())
+
     @app.get("/v2/hearts/{route}")
-    def account_hearts(route: str, uid: str = Depends(account_principal)):
-        return ledger.snapshot(uid, route)
+    def account_hearts(route: str, request: Request):
+        # Auth, device permission, root resolution and lazy recovery share the
+        # same transaction. No account-only fallback after a history merge.
+        return groups.snapshot(session_token(request), request.headers.get("X-Android-Id"), route)
 
     @app.get("/v2/progress")
     def account_progress(uid: str = Depends(account_principal)):

@@ -33,6 +33,7 @@ class FastTestHasher:
 
 class Harness:
     def __init__(self, root, *, legacy=False, testing=False):
+        self.sessions = {}
         self.now = [int(time.time() * 1000)]
         self.db = Database(root / "runtime" / "servertec.db", clock=lambda: self.now[0])
         if legacy:
@@ -50,7 +51,9 @@ class Harness:
 
     def client(self):
         app = create_app(self.settings, self.db, verifier=self.verifier, accounts=self.store)
-        return TestClient(app, base_url="https://127.0.0.1", client=("127.0.0.1", 55000))
+        client = TestClient(app, base_url="https://127.0.0.1", client=("127.0.0.1", 55000))
+        client.headers["X-Android-Id"] = "0123456789abcdef"
+        return client
 
     def invitation(self):
         return self.store.issue_invitation()["invitation"]
@@ -59,7 +62,19 @@ class Harness:
         response = client.post("/v2/auth/register", json={
             "username": username, "password": PASSWORD, "invitation": self.invitation()})
         assert response.status_code == 201, response.text
-        return response.json()
+        result = response.json()
+        self.link(client, result)
+        return result
+
+    def link(self, client, result, device="0123456789abcdef"):
+        self.sessions[result["account_id"]] = result["access_token"]
+        headers = {**self.bearer(result), "X-Android-Id": device}
+        pending = client.post("/v2/devices/prepare", headers=headers)
+        assert pending.status_code == 200
+        if pending.json()["status"] == "confirmation_required":
+            confirmed = client.post("/v2/devices/confirm", headers=headers, json={
+                "confirmation_token": pending.json()["confirmation_token"]})
+            assert confirmed.status_code == 200
 
     def jwt(self, subject="new-google", **changes):
         now = int(time.time())
@@ -74,7 +89,10 @@ class Harness:
         con = self.db.connect()
         try:
             con.execute("BEGIN IMMEDIATE")
-            result = self.ledger.debit_in_transaction(con, account_id, route)
+            con.row_factory = sqlite3.Row
+            groups = self.store.on_enroll.__self__
+            result = groups.debit_in_transaction(con, self.sessions[account_id],
+                                                 "0123456789abcdef", route)
             con.commit()
             return result
         finally:
@@ -102,12 +120,17 @@ def test_recreated_client_server_and_device_headers_keep_the_same_balance(api):
         assert login.status_code == 200
         result = login.json()
         assert result["account_id"] == registered["account_id"]
-        for device in ("0123456789abcdef", "ffffffffffffffff", "client-invented-id"):
+        for device in ("0123456789abcdef", "ffffffffffffffff"):
             headers = {**api.bearer(result), "X-Android-Id": device,
                        "X-User-Id": "a-different-account", "X-Forwarded-For": "203.0.113.23"}
+            if device != "0123456789abcdef":
+                assert client.get("/v2/hearts/programming", headers=headers).status_code == 409
+            api.link(client, result, device)
             response = client.get("/v2/hearts/programming", headers=headers)
             assert response.json()["available"] == 7
             assert response.headers["cache-control"] == "no-store"
+        assert client.get("/v2/hearts/programming", headers={
+            **api.bearer(result), "X-Android-Id": "client-invented-id"}).status_code == 422
         assert client.get("/v2/auth/me", headers=api.bearer(result)).json() == {
             "account_id": result["account_id"]}
         assert client.get("/v2/hearts/math_physics", headers=api.bearer(result)).json()["available"] == 12
@@ -146,7 +169,8 @@ def test_missing_wallet_fails_closed_without_new_grant(api):
         api.debit_internal(registered["account_id"])
         con = api.db.connect()
         try:
-            con.execute("DELETE FROM account_hearts WHERE uid=? AND route='programming'",
+            con.execute("DELETE FROM group_hearts WHERE group_id IN "
+                        "(SELECT group_id FROM group_accounts WHERE account_id=?) AND route='programming'",
                         (registered["account_id"],))
         finally:
             con.close()
@@ -198,7 +222,7 @@ def test_failed_storage_never_reports_registration_or_consumes_invitation(api):
         response = client.post("/v2/auth/register", json=body)
         assert response.status_code == 503
         assert response.json() == {"error": "storage_unavailable"}
-        api.store.on_enroll = original
+        api.store.on_enroll.__self__.prior_enroll = original
         assert client.post("/v2/auth/register", json=body).status_code == 201
 
 
@@ -243,6 +267,7 @@ def test_google_new_account_requires_invite_and_sessions_do_not_outlive_id_token
             "id_token": token, "invitation": api.invitation()})
         assert result.status_code == 200
         first = result.json()
+        api.link(client, first)
         assert first["expires_at_ms"] <= (int(time.time()) + 120) * 1000
         api.debit_internal(first["account_id"])
         second = client.post("/v2/auth/google", json={"id_token": token}).json()
@@ -257,6 +282,7 @@ def test_google_legacy_identity_migrates_once_and_keeps_progress(tmp_path):
         first = client.post("/v2/auth/google", json={"id_token": api.jwt("legacy-google")})
         assert first.status_code == 200
         identity = first.json()
+        api.link(client, identity)
         assert client.get("/v2/hearts/programming", headers=api.bearer(identity)).json()["available"] == 7
         assert client.get("/v2/progress", headers=api.bearer(identity)).json()["completed"][0]["item"] == "lesson_1"
         api.debit_internal(identity["account_id"])
