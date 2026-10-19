@@ -18,7 +18,7 @@ from starlette.responses import JSONResponse, Response
 
 
 DEMO_HOST = "learngraphicsprogramming.dynamics"
-PUBLIC_DEMO_HOST = "servertec-demo-3.example.invalid"
+PUBLIC_DEMO_HOST = "servertec-demo.example.invalid"
 ALLOWED_DEMO_HOSTS = (DEMO_HOST, PUBLIC_DEMO_HOST)
 MAX_HEADERS = 32
 MAX_HEADER_BYTES = 8192

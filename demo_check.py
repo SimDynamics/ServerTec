@@ -17,6 +17,8 @@ import ssl
 
 
 DEMO_NAME = 'learngraphicsprogramming.dynamics'
+PUBLIC_DEMO_NAME = 'servertec-demo.example.invalid'
+ALLOWED_DEMO_NAMES = (DEMO_NAME, PUBLIC_DEMO_NAME)
 
 
 def tls_context(ca_file: Path) -> ssl.SSLContext:
@@ -30,18 +32,20 @@ def tls_context(ca_file: Path) -> ssl.SSLContext:
 
 
 def https_get(address: str, port: int, path: str, ca_file: Path, *,
-              server_name: str = DEMO_NAME) -> tuple[int, dict[str, str], bytes]:
+              server_name: str | None = None, hostname: str = DEMO_NAME) -> tuple[int, dict[str, str], bytes]:
     ipaddress.ip_address(address)
     if not 1 <= port <= 65535:
         raise ValueError('Puerto fuera de rango')
     if not path.startswith('/') or any(ord(char) < 33 or ord(char) > 126 for char in path):
         raise ValueError('Ruta HTTP no valida')
-    if server_name not in (DEMO_NAME, 'wrong-name.invalid'):
+    if hostname not in ALLOWED_DEMO_NAMES or (server_name is not None and server_name not in (hostname, 'wrong-name.invalid')):
         raise ValueError('Nombre de prueba no valido')
+    if server_name is None:
+        server_name = hostname
     context = tls_context(ca_file)
     with socket.create_connection((address, port), timeout=5) as connection:
         with context.wrap_socket(connection, server_hostname=server_name) as stream:
-            stream.sendall((f'GET {path} HTTP/1.1\r\nHost: {DEMO_NAME}'
+            stream.sendall((f'GET {path} HTTP/1.1\r\nHost: {hostname}'
                             '\r\nConnection: close\r\nCache-Control: no-cache\r\n\r\n').encode('ascii'))
             with http.client.HTTPResponse(stream) as response:
                 response.begin()
@@ -51,12 +55,14 @@ def https_get(address: str, port: int, path: str, ca_file: Path, *,
                 return response.status, {k.lower(): v for k, v in response.getheaders()}, body
 
 
-def verify_demo(directory: Path, address: str, port: int = 443) -> dict:
+def verify_demo(directory: Path, address: str, port: int = 443, *, hostname: str = DEMO_NAME) -> dict:
+    if hostname not in ALLOWED_DEMO_NAMES:
+        raise ValueError('Nombre de prueba no autorizado')
     ca_file = directory / 'public' / 'authority.pem'
     checks = []
     for path, content_type in [('/', 'text/html'), ('/menu.css', 'text/css'),
                                ('/menu.js', 'javascript')]:
-        status, headers, body = https_get(address, port, path, ca_file)
+        status, headers, body = https_get(address, port, path, ca_file, hostname=hostname)
         if status != 200 or content_type not in headers.get('content-type', '') or not body:
             raise ValueError('Menu o recurso local no disponible')
         if 'no-store' not in headers.get('cache-control', '').split(', '):
@@ -65,7 +71,7 @@ def verify_demo(directory: Path, address: str, port: int = 443) -> dict:
     responses = []
     for _ in range(2):
         challenge = secrets.token_hex(24)
-        status, headers, body = https_get(address, port, '/demo/status?challenge=' + challenge, ca_file)
+        status, headers, body = https_get(address, port, '/demo/status?challenge=' + challenge, ca_file, hostname=hostname)
         payload = json.loads(body)
         if status != 200 or payload.get('status') != 'ok' or payload.get('demo') is not True:
             raise ValueError('Estado demo no valido')
@@ -85,12 +91,12 @@ def verify_demo(directory: Path, address: str, port: int = 443) -> dict:
                  '/README.md', '/rules-catalog.json', '/docs', '/openapi.json',
                  '/v2/auth/me', '/v2/evaluations', '/v1/progress',
                  '/%2e%2e/manage.py', '/demo_web_assets/../manage.py'):
-        status, _, _ = https_get(address, port, path, ca_file)
+        status, _, _ = https_get(address, port, path, ca_file, hostname=hostname)
         if status != 404:
             raise ValueError('Una ruta ajena a la demo esta accesible')
     checks.append('rutas_privadas_y_de_negocio_inaccesibles')
     try:
-        https_get(address, port, '/', ca_file, server_name='wrong-name.invalid')
+        https_get(address, port, '/', ca_file, server_name='wrong-name.invalid', hostname=hostname)
     except ssl.SSLCertVerificationError:
         checks.append('nombre_tls_incorrecto_rechazado')
     else:
@@ -106,8 +112,9 @@ def main() -> None:
     parser.add_argument('--directory', type=Path, default=Path(r'D:\Projects\ServerTec\demo-web-20261019'))
     parser.add_argument('--address', default='127.0.0.1', help='IP literal, sin cambiar DNS/hosts')
     parser.add_argument('--port', type=int, default=443)
+    parser.add_argument('--hostname', choices=ALLOWED_DEMO_NAMES, default=DEMO_NAME)
     args = parser.parse_args()
-    print(json.dumps(verify_demo(args.directory.resolve(), args.address, args.port),
+    print(json.dumps(verify_demo(args.directory.resolve(), args.address, args.port, hostname=args.hostname),
                      ensure_ascii=False, indent=2))
 
 

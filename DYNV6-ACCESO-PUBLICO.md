@@ -71,3 +71,40 @@ revision previa y permiso del propietario. No ejecutar Inicializar.
 Pruebas nuevas en esta entrega: archivo `test_demo_public_probe.py`
 incluido para ejecutar localmente. **No se ejecutaron en Windows durante
 esta publicacion remota.** No declarar validado el acceso publico.
+
+## Continuacion: DNS A y AAAA confirmados; preparar HTTPS de demo para dynv6
+
+El propietario confirmo en Windows: A = 203.0.113.10, AAAA = 2001:db8:feed::10.
+La direccion IPv4 LAN del servidor es 198.51.100.10. El puerto TCP 443 NO tenia listener.
+
+Este cambio de codigo NO abre la red, no toca el backend ni crea certificados en tu PC.
+
+Tras Pull, ejecutar pruebas desde E:\PersonalFiles\Projects\ServerTec:
+
+    powershell -NoProfile -ExecutionPolicy Bypass -File .\Demo-Web.ps1 -Accion Pruebas
+
+Crear la NUEVA identidad en una carpeta que no exista, sin sobrescribir ninguna anterior:
+
+    $n = "servertec-demo.example.invalid"
+    $d = "D:\Projects\ServerTec\demo-web-dynv6-20261019"
+    powershell -NoProfile -ExecutionPolicy Bypass -File .\Demo-Web.ps1 -Accion Preparar -Nombre $n -Directorio $d -AutoridadDesechable
+    powershell -NoProfile -ExecutionPolicy Bypass -File .\Demo-Web.ps1 -Accion Inspeccionar -Nombre $n -Directorio $d
+
+Primero probar el listener SOLO localmente:
+
+    powershell -NoProfile -ExecutionPolicy Bypass -File .\Demo-Web.ps1 -Accion Iniciar -Nombre $n -Directorio $d
+
+En otra consola PowerShell:
+
+    powershell -NoProfile -ExecutionPolicy Bypass -File .\Demo-Web.ps1 -Accion Comprobar -Nombre $n -Directorio $d
+
+Detener el listener solo desde su consola con Ctrl+C.
+No repetir Preparar sobre una carpeta existente ni ejecutar Inicializar.
+La PKI de demo sigue siendo privada: Chrome normal NO reconocera el certificado sin una CA publica.
+No publicar login, corazones o datos de usuarios con una CA no reconocida.
+
+Pendiente de consentimiento concreto: autorizacion puntual de firewall Windows
+para la demo y reenvio router TCP 443 hacia 198.51.100.10; para IPv6 se necesita
+listener propio y permiso entrante especifico. No usar DMZ, UPnP ni exponer
+el backend real. Una sola instancia no garantiza ambas familias.
+No se han ejecutado pruebas en la PC en esta publicacion remota.

@@ -30,6 +30,8 @@ from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 
 
 HOSTNAME = "learngraphicsprogramming.dynamics"
+PUBLIC_HOSTNAME = "servertec-demo.example.invalid"
+ALLOWED_HOSTNAMES = (HOSTNAME, PUBLIC_HOSTNAME)
 DEFAULT_DIRECTORY = Path(r"D:\Projects\ServerTec\demo-web-20261019")
 REPOSITORY = Path(__file__).resolve().parent
 PRODUCTION_STATE = Path(r"D:\Projects\ServerTec\state")
@@ -103,21 +105,23 @@ def _key_usage(*, authority: bool) -> x509.KeyUsage:
     )
 
 
-def _name_constraints() -> x509.NameConstraints:
+def _name_constraints(hostname: str = hostname) -> x509.NameConstraints:
+    if hostname not in ALLOWED_HOSTNAMES:
+        raise ValueError('Nombre PKI no autorizado')
     return x509.NameConstraints(
-        permitted_subtrees=[x509.DNSName(HOSTNAME)],
-        excluded_subtrees=[x509.DNSName("." + HOSTNAME),
+        permitted_subtrees=[x509.DNSName(hostname)],
+        excluded_subtrees=[x509.DNSName("." + hostname),
                            x509.IPAddress(ipaddress.ip_network("0.0.0.0/0")),
                            x509.IPAddress(ipaddress.ip_network("::/0"))],
     )
 
 
-def _make_certificates() -> tuple[ec.EllipticCurvePrivateKey, x509.Certificate,
+def _make_certificates(hostname: str = HOSTNAME) -> tuple[ec.EllipticCurvePrivateKey, x509.Certificate,
                                   ec.EllipticCurvePrivateKey, x509.Certificate,
                                   ec.EllipticCurvePrivateKey, x509.Certificate]:
     start = datetime.now(timezone.utc).replace(microsecond=0) - timedelta(minutes=5)
     authority_key = ec.generate_private_key(ec.SECP256R1())
-    name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, f"ServerTec DEMO ROOT {HOSTNAME}")])
+    name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, f"ServerTec DEMO ROOT {hostname}")])
     authority = (
         x509.CertificateBuilder().subject_name(name).issuer_name(name)
         .public_key(authority_key.public_key()).serial_number(x509.random_serial_number())
@@ -127,13 +131,13 @@ def _make_certificates() -> tuple[ec.EllipticCurvePrivateKey, x509.Certificate,
         .add_extension(x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH]), critical=False)
         .add_extension(x509.SubjectKeyIdentifier.from_public_key(authority_key.public_key()), critical=False)
         .add_extension(x509.AuthorityKeyIdentifier.from_issuer_public_key(authority_key.public_key()), critical=False)
-        .add_extension(_name_constraints(), critical=True)
+        .add_extension(_name_constraints(hostname), critical=True)
         .sign(authority_key, hashes.SHA256())
     )
     issuer_key = ec.generate_private_key(ec.SECP256R1())
     issuer = (
         x509.CertificateBuilder()
-        .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, f"ServerTec DEMO ISSUER {HOSTNAME}")]))
+        .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, f"ServerTec DEMO ISSUER {hostname}")]))
         .issuer_name(authority.subject).public_key(issuer_key.public_key())
         .serial_number(x509.random_serial_number())
         .not_valid_before(start).not_valid_after(start + ISSUER_LIFETIME)
@@ -142,20 +146,20 @@ def _make_certificates() -> tuple[ec.EllipticCurvePrivateKey, x509.Certificate,
         .add_extension(x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH]), critical=False)
         .add_extension(x509.SubjectKeyIdentifier.from_public_key(issuer_key.public_key()), critical=False)
         .add_extension(x509.AuthorityKeyIdentifier.from_issuer_public_key(authority_key.public_key()), critical=False)
-        .add_extension(_name_constraints(), critical=True)
+        .add_extension(_name_constraints(hostname), critical=True)
         .sign(authority_key, hashes.SHA256())
     )
     server_key = ec.generate_private_key(ec.SECP256R1())
     server = (
         x509.CertificateBuilder()
-        .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, HOSTNAME)]))
+        .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, hostname)]))
         .issuer_name(issuer.subject).public_key(server_key.public_key())
         .serial_number(x509.random_serial_number())
         .not_valid_before(start).not_valid_after(start + LEAF_LIFETIME)
         .add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
         .add_extension(_key_usage(authority=False), critical=True)
         .add_extension(x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH]), critical=False)
-        .add_extension(x509.SubjectAlternativeName([x509.DNSName(HOSTNAME)]), critical=False)
+        .add_extension(x509.SubjectAlternativeName([x509.DNSName(hostname)]), critical=False)
         .add_extension(x509.SubjectKeyIdentifier.from_public_key(server_key.public_key()), critical=False)
         .add_extension(x509.AuthorityKeyIdentifier.from_issuer_public_key(issuer_key.public_key()), critical=False)
         .sign(issuer_key, hashes.SHA256())
@@ -166,11 +170,11 @@ def _make_certificates() -> tuple[ec.EllipticCurvePrivateKey, x509.Certificate,
 def _metadata(authority: x509.Certificate, authority_pem: bytes,
               issuer: x509.Certificate, issuer_pem: bytes,
               server: x509.Certificate, server_pem: bytes, server_chain_pem: bytes,
-              *, authority_key_retained: bool) -> dict:
+              *, authority_key_retained: bool, hostname: str = HOSTNAME) -> dict:
     return {
         "schema_version": 2,
         "purpose": "ServerTec isolated web demonstration; no production identity",
-        "hostname": HOSTNAME,
+        "hostname": hostname,
         "authority_key_retained": authority_key_retained,
         "issuer_key_retained": False,
         "authority_certificate_sha256": authority.fingerprint(hashes.SHA256()).hex(),
@@ -187,21 +191,21 @@ def _metadata(authority: x509.Certificate, authority_pem: bytes,
         "issuer_not_after_utc": issuer.not_valid_after_utc.isoformat(),
         "leaf_not_before_utc": server.not_valid_before_utc.isoformat(),
         "leaf_not_after_utc": server.not_valid_after_utc.isoformat(),
-        "authority_dns_permitted_subtrees": [HOSTNAME],
-        "authority_dns_excluded_subtrees": ["." + HOSTNAME],
+        "authority_dns_permitted_subtrees": [hostname],
+        "authority_dns_excluded_subtrees": ["." + hostname],
         "authority_ip_excluded_subtrees": ["0.0.0.0/0", "::/0"],
-        "issuer_dns_permitted_subtrees": [HOSTNAME],
-        "issuer_dns_excluded_subtrees": ["." + HOSTNAME],
+        "issuer_dns_permitted_subtrees": [hostname],
+        "issuer_dns_excluded_subtrees": ["." + hostname],
         "issuer_ip_excluded_subtrees": ["0.0.0.0/0", "::/0"],
-        "leaf_dns_san": [HOSTNAME],
-        "name_constraints_scope": SCOPE_NOTE,
+        "leaf_dns_san": [hostname],
+        "name_constraints_scope": SCOPE_NOTE.replace(HOSTNAME, hostname),
         "fingerprint_meaning": "certificate_sha256 hashes the individual DER certificate; authority/issuer_pem_file_sha256 hash those public PEM files; leaf_pem_file_sha256 hashes ONLY the first PEM block of runtime/server.pem; server_chain_pem_file_sha256 hashes the complete leaf+intermediate PEM file",
         "trust_installation": "Not installed; independently compare the ROOT DER fingerprint before client trust. Import only public/authority.pem or authority.cer, NEVER public/issuer.pem as a trusted CA.",
         "replacement": "Leaf lifetime is 7 days. Remove the old CA from test clients and prepare a new identity in a NEW directory; existing material is never renewed or overwritten.",
     }
 
 
-def prepare_demo(directory: Path, password: bytes | None) -> dict:
+def prepare_demo(directory: Path, password: bytes | None, *, hostname: str = HOSTNAME) -> dict:
     """Create fresh demo material; None discards the CA signing key after use.
 
     The intermediate signing key is never retained. Retained root keys always
@@ -210,6 +214,8 @@ def prepare_demo(directory: Path, password: bytes | None) -> dict:
     mode installs trust, edits hosts/firewall, starts a listener or touches SQLite.
     A failed preparation deliberately leaves its protected partial folder intact.
     """
+    if hostname not in ALLOWED_HOSTNAMES:
+        raise ValueError('Nombre PKI no autorizado')
     directory = checked_directory(directory, must_be_new=True)
     if password is not None and (not isinstance(password, bytes) or not 16 <= len(password) <= 1023):
         raise ValueError("La frase privada debe tener entre 16 y 1023 bytes UTF-8")
@@ -219,7 +225,7 @@ def prepare_demo(directory: Path, password: bytes | None) -> dict:
         child = directory / name
         child.mkdir(mode=0o700, exist_ok=False)
         _secure_directory(child)
-    authority_key, authority, issuer_key, issuer, server_key, server = _make_certificates()
+    authority_key, authority, issuer_key, issuer, server_key, server = _make_certificates(hostname)
     del issuer_key
     authority_pem = authority.public_bytes(serialization.Encoding.PEM)
     issuer_pem = issuer.public_bytes(serialization.Encoding.PEM)
@@ -240,13 +246,13 @@ def prepare_demo(directory: Path, password: bytes | None) -> dict:
     _write_new(directory / "public" / "issuer.pem", issuer_pem)
     metadata = _metadata(authority, authority_pem, issuer, issuer_pem,
                          server, server_pem, server_chain_pem,
-                         authority_key_retained=password is not None)
+                         authority_key_retained=password is not None, hostname=hostname)
     _write_new(directory / "public" / "metadata.json", json.dumps(metadata, indent=2).encode("utf-8"))
-    return inspect_demo(directory)
+    return inspect_demo(directory, hostname=hostname)
 
 
 def _check_certificates(authority: x509.Certificate, issuer: x509.Certificate,
-                        server: x509.Certificate) -> None:
+                        server: x509.Certificate, *, hostname: str = HOSTNAME) -> None:
     try:
         authority.verify_directly_issued_by(authority)
         issuer.verify_directly_issued_by(authority)
@@ -296,16 +302,16 @@ def _check_certificates(authority: x509.Certificate, issuer: x509.Certificate,
                 raise ValueError("La vigencia del certificado excede a su emisor")
             if is_authority:
                 constraints = cert.extensions.get_extension_for_class(x509.NameConstraints)
-                if not constraints.critical or constraints.value != _name_constraints():
+                if not constraints.critical or constraints.value != _name_constraints(hostname):
                     raise ValueError("NameConstraints de demo incorrectos")
         san = server.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
-        if list(san) != [x509.DNSName(HOSTNAME)]:
+        if list(san) != [x509.DNSName(hostname)]:
             raise ValueError("El SAN de demo debe contener solo el nombre exacto")
     except (x509.ExtensionNotFound, InvalidSignature) as exc:
         raise ValueError("Certificados de demo incompletos o firma no valida") from exc
 
 
-def inspect_demo(directory: Path) -> dict:
+def inspect_demo(directory: Path, *, hostname: str | None = None) -> dict:
     """Validate only public certificates/metadata; never open a private key."""
     directory = checked_directory(directory, must_be_new=False)
     authority_pem = (directory / "public" / "authority.pem").read_bytes()
@@ -329,13 +335,16 @@ def inspect_demo(directory: Path) -> dict:
     # The exact canonical bundle forbids extra PEM material, roots or reordered blocks.
     if server_chain_pem != server_pem + issuer_pem:
         raise ValueError("El archivo de cadena de demo contiene material adicional o no canonico")
-    _check_certificates(authority, issuer, server)
     recorded = json.loads((directory / "public" / "metadata.json").read_text(encoding="utf-8"))
     if not isinstance(recorded, dict) or type(recorded.get("authority_key_retained")) is not bool:
         raise ValueError("Metadata de demo invalida")
+    selected = recorded.get("hostname")
+    if selected not in ALLOWED_HOSTNAMES or (hostname is not None and selected != hostname):
+        raise ValueError("El nombre de la identidad no corresponde a la seleccion")
+    _check_certificates(authority, issuer, server, hostname=selected)
     expected = _metadata(authority, authority_pem, issuer, issuer_pem,
                          server, server_pem, server_chain_pem,
-                         authority_key_retained=recorded["authority_key_retained"])
+                         authority_key_retained=recorded["authority_key_retained"], hostname=selected)
     if recorded != expected:
         raise ValueError("La metadata o las huellas de demo no corresponden a los certificados")
     return expected
@@ -345,13 +354,15 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="PKI propia y aislada para la demo web; no instala confianza")
     parser.add_argument("action", choices=("prepare", "inspect"))
     parser.add_argument("--directory", type=Path, default=DEFAULT_DIRECTORY)
+    parser.add_argument("--hostname", choices=ALLOWED_HOSTNAMES,
+                        help="Nombre TLS exacto; preparacion privada por defecto")
     parser.add_argument("--one-shot", action="store_true",
                         help="Solo prepare: no conservar la clave privada de la CA ni pedir frase")
     args = parser.parse_args(argv)
     if args.action == "inspect":
         if args.one_shot:
             parser.error("--one-shot solo se usa con prepare")
-        metadata = inspect_demo(args.directory)
+        metadata = inspect_demo(args.directory, hostname=args.hostname)
     else:
         checked_directory(args.directory, must_be_new=True)
         password = None
@@ -362,7 +373,7 @@ def main(argv: list[str] | None = None) -> None:
             if phrase != getpass.getpass("Repite la frase privada: "):
                 raise ValueError("Las frases no coinciden")
             password = phrase.encode("utf-8")
-        metadata = prepare_demo(args.directory, password)
+        metadata = prepare_demo(args.directory, password, hostname=args.hostname or HOSTNAME)
     print(json.dumps(metadata, indent=2))
 
 
