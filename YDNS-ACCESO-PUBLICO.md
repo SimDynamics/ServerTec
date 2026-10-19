@@ -1,44 +1,61 @@
-# YDNS: continuidad del acceso publico de ServerTec
+# DNS publico: YDNS no admite altas nuevas y evaluacion de reemplazo
 
-## Estado de esta etapa
+## Correccion verificada el 2026-10-19
 
-- URL candidata: https://servertec-demo-3.example.invalid/ (aun no asignada ni verificada).
-- El propietario autorizo registrar una cuenta y solicitar ese nombre.
-- El registro no se ha enviado desde esta sesion; tampoco se ha aceptado ningun acuerdo o creado credenciales.
-- Sin cambios al servidor, PKI, SQLite, firewall, router o API de cuentas.
-- No se ha comprobado disponibilidad del nombre, conectividad entrante ni confianza publica de HTTPS.
+El propietario accedio al panel Hosts de YDNS y encontro este aviso:
 
-## Alta pendiente del propietario
+> As of July 20, 2026 we no longer provide new hosts for the ydns.eu domain. If you wish to use dynamic DNS for new hosts, you'll need to add your own domain to YDNS and add hosts on top of it.
 
-1. Abrir https://ydns.io/user/register y usar el correo previamente elegido.
-2. Leer condiciones y privacidad y decidir si se aceptan. Completar confirmacion de cuenta en el sitio YDNS, sin proporcionar contrasenas en chats ni Git.
-3. Una vez dentro, intentar crear el host `servertec-demo-3.example.invalid`. Verificar en la interfaz el sufijo que se ofrece y su disponibilidad.
-4. Comprobar que el registro pertenece a la cuenta antes de emitir consultas o actualizar DNS.
-5. No declarar acceso publico hasta comprobar resolucion publica, llegada desde otra red y comportamiento HTTPS real en Chrome.
+**DESCARTADO:** no solicitar `servertec-demo-3.example.invalid` ni agregar un dominio comprado. La documentacion previa que invitaba a registrarlo quedo invalidada por la restriccion de julio de 2026. Un servicio DNS gratuito que exige un dominio propio NO resuelve el objetivo de tener un nombre publico sin costo.
 
-## Fuentes y restricciones
+YDNS no ha entregado un nuevo host al propietario. No publicar una IP, abrir puertos ni cambiar el certificado como intento de solucionar la ausencia del nombre.
 
-- Condiciones: https://ydns.io/terms
-- Alta: https://ydns.io/user/register
-- API: https://ydns.io/api/v1/
-- YDNS declara mantener gratuito su servicio DNS durante toda la vida del servicio y permite uso razonable. Esto no garantiza disponibilidad perpetua ni elimina su funcion de proveedor externo de nombres.
-- No se requieren aqui cuotas de hosting, publicidad, tuneles comerciales ni suscripciones; ServerTec sigue en la PC.
-- No se implementa facturacion, cambios de plan ni pagos futuros.
+## Investigacion adicional: sin servicios freemium
 
-## Publicacion segura despues de obtener el nombre
+Se consultaron fuentes oficiales, sin abrir cuentas nuevas ni modificar ServerTec:
 
-Tres requisitos distintos deben comprobarse:
+| Servicio | Registro de nuevos nombres | Condiciones observadas | Decision |
+|---|---|---|---|
+| YDNS (`ydns.eu`) | Nuevas altas cerradas 2026-07-20; exige dominio propio | DNS gratuito sobre dominios ya propios | Descartado para el nombre |
+| nsupdate.info | Noticias oficiales 2023-04-13 indican suspendido el registro de cuentas nuevas | Anuncia servicio sin anuncios ni suscripcion, pero no se pueden dar por disponibles nuevas altas | Descartado en ausencia de reapertura verificada |
+| dynv6 | Formulario de registro abierto el 2026-10-19; incluye correo y contrasena | Sitio oficial ofrece nombres publicos IPv4/IPv6, dice "Free for everyone"; sin plan de pago ofrecido en el formulario consultado | Candidato por evaluar, NO aprobado como solucion definitiva |
+| DuckDNS | Servicio DDNS gratuito por donaciones y sin tarifa obligatoria visible | Condiciones reservan la suspension y cambios, sin compromiso irrevocable de gratuidad; su FAQ dice "free or as cheap as possible" | No acredita la continuidad incondicional exigida |
 
-1. **DNS:** que registros A y/o AAAA publicados resuelvan al destino real. Para IP dinamica, la API YDNS permite cambiar el registro mediante HTTPS; no almacenar credenciales en el repositorio. No publicar direcciones internas.
-2. **Acceso externo:** identificar WAN IPv4/CGNAT y alcance de IPv6; aplicar solo reglas puntuales y autorizadas para la demo aislada. Probar desde una red externa, no desde la misma LAN.
-3. **HTTPS:** conservar TLS/CA privada ya implementada, sabiendo que un Chrome sin preparar no reconocera automaticamente esa CA. No desactivar validacion TLS para ocultar el bloqueo. La confianza publica se evaluara por separado sin introducir costes presentes ni futuros.
+Fuentes oficiales:
+- https://ydns.io/hosts/ (aviso visto por el propietario en sesion autenticada).
+- https://www.nsupdate.info/custom/news.html
+- https://dynv6.com/
+- https://dynv6.com/users/sign_up
+- https://dynv6.com/docs/apis
+- https://www.duckdns.org/
+- https://www.duckdns.org/tac.jsp
+- https://www.duckdns.org/faqs.jsp
 
-Referencia de la API de actualizacion: `https://ydns.io/api/v1/update/`. El parametro `host` es obligatorio, `ip` opcional, `record_id` opcional; requiere autenticacion. El HTTP 200 con contenido `good` confirma la actualizacion. No activar llamadas automaticas antes de tener host e IP verificadas.
+El sitio de dynv6 advierte expresamente que no garantiza proteccion DDoS empresarial ni SLA y recomienda no utilizarlo para servicios criticos. Que no anuncie un plan de pago no acredita disponibilidad vitalicia ni garantia contractual de gratuidad permanente. El uso comercial de una tienda, asignacion concreta y continuidad **no han sido validados**.
 
-## Protecciones permanentes
+Propuesta de nombre para investigar, NO registrada ni confirmada:
+`https://servertec-demo-2.example.invalid/`
+El sufijo `dynv6.net` aparece en la documentacion de API. La disponibilidad del identificador solo debe confirmarse dentro de la cuenta autorizada.
 
-Nunca ejecutar Inicializar sobre el estado existente. No mover ni publicar datos de D:\Projects\ServerTec\state. No eliminar certificados existentes, claves ni pruebas. No abrir el backend completo a Internet para mostrar el menu. La demo externa debe seguir aislada del sistema real de cuentas, licencias, evaluaciones y corazones.
+No crear una cuenta de dynv6 sin autorizacion especifica del propietario. La autorizacion anterior cubria exclusivamente YDNS; no equivale a aceptar condiciones de otro proveedor. No introducir tarjetas, publicidad, freemium, cuotas comerciales ni contratos de pago futuro.
 
-## Proximo hito
+## Objetivo que NO se abandona
 
-Una vez que el propietario confirme el nombre realmente asignado, preparar la actualizacion DNS con manejo seguro de secretos, comprobar la IPv4/IPv6 publica desde otra red y solicitar permiso antes de cambios en firewall/router. La URL candidata no debe anunciarse aun como operativa.
+Cualquier visitante de Chrome para Windows o Android debe poder abrir la URL publica desde Internet sin configurar hosts, DNS, router o certificados en su dispositivo.
+
+ServerTec, menu y datos siguen en la PC. Requisitos tecnicos independientes:
+
+1. Nombre del DNS publico asignado, con mecanismo seguro para actualizar IPv4/IPv6 cuando cambien, sin planes de pago. No inventar asignaciones.
+2. Acceso externo real desde redes IPv4 e IPv6. Verificar WAN/CGNAT, router/firewall y comportamiento desde fuera. Un registro AAAA no garantiza que todos los clientes tengan IPv6.
+3. HTTPS actual se conserva; CA privada actual NO equivale a reconocimiento automatico de Chrome. No abrir cuentas ni rutas sensibles sin transporte seguro reconocido por el cliente. No alterar las claves ni permitir saltarse advertencias.
+
+La continuidad comercial absoluta sin pagos futuros por proveedores externos no esta garantizada por estas fuentes. Si el proveedor desaparece, el nombre deja de resolver; la arquitectura no debe presuponer pagar despues ni describir el bloqueo como resuelto.
+
+## Estado y siguientes pasos
+
+- YDNS: cerrado para nuevos nombres; **no insistir ni comprar un dominio**.
+- dynv6: candidato bajo investigacion; registro visible pero no efectuado, nombre no asignado, condiciones de continuidad y uso comercial pendientes de validar.
+- Servidor: sin cambios de red, datos, certificados o ejecutables en esta etapa.
+- Publicacion Chrome: NO probada desde Internet.
+
+Solicitar primero autorizacion para examinar o registrar una cuenta del nuevo servicio. Hasta entonces continuar solamente comprobaciones locales y documentacion que no debiliten el servidor.
