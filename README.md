@@ -96,11 +96,17 @@ confirmaciones. Sustituye las reglas por cuenta y sin ANDROID_ID descritas en
   continúan activos. Las comprobaciones costosas de contraseña se limitan a una
   simultánea por proceso; consultar con una sesión sólo requiere su validación en SQLite.
 
-**La evaluación de respuestas todavía no está implementada.** La API v2 permite
-autenticar, consultar el saldo y leer progreso preservado. No hay una ruta pública
-v2 para descontar corazones ni para declarar una respuesta correcta.
-La primitiva interna de débito exige una transacción y está reservada para el
-futuro evaluador; por sí sola no aporta validación ni idempotencia de intentos.
+**La evaluación de respuestas ya tiene un endpoint v2 con reglas del servidor.**
+`POST /v2/evaluations` confirma resultado, descuento y recibo en una misma
+transacción. Reintentar un UUID no vuelve a cobrar; cambiar sus parámetros es
+conflicto. La misma respuesta concreta bajo otro UUID tampoco vuelve a cobrar.
+Cada respuesta incluye el saldo vigente y su próxima recuperación.
+
+El catálogo inicial contiene 364 ejercicios reales de las primeras unidades de
+Programación 1 y Matemáticas 1 en ES/EN/FR. Los tipos no admitidos se rechazan sin
+descuento; no se ejecuta código del cliente. La integración Android y la cobertura
+del resto del currículo siguen pendientes. Contrato, cobertura y operación:
+[EVALUACIONES.md](EVALUACIONES.md).
 
 ### Contrato vigente y retirada del prototipo
 
@@ -118,10 +124,11 @@ futuro evaluador; por sí sola no aporta validación ni idempotencia de intentos
 | POST | `/v2/devices/confirm` | Aceptar una confirmación válida de un solo uso |
 | POST | `/v2/devices/cancel` | Cancelar sin unir historiales ni cambiar corazones |
 | GET | `/v2/hearts/{route}` | Saldo compartido, grupo vigente y próxima recuperación |
+| POST | `/v2/evaluations` | Evaluación autorizada, descuento atómico y recibo idempotente |
 | GET | `/v2/progress` | Progreso de la identidad canónica |
 
 Las rutas protegidas v2 requieren `Authorization: Bearer <sesión>`.
-Las rutas de dispositivos y corazones requieren además `X-Android-Id`; las de
+Las rutas de dispositivos, corazones y evaluaciones requieren además `X-Android-Id`; las de
 identidad y progreso no dependen de esa asociación. No aceptan tokens QA como
 cuentas reales. Todas las rutas
 `/v1/*` quedan retiradas con HTTP 410 cuando `testing=false`.
@@ -154,10 +161,10 @@ Estado: `D:\Projects\ServerTec\state`. Contiene base de datos, token de pruebas,
 
 ## Próximos pasos del diseño autorizado
 
-El diseño aceptado exige conexión para comprobar respuestas antes de mostrar el
-resultado. ServerTec deberá evaluar contra reglas propias y confirmar intento,
-resultado y descuento juntos, con idempotencia por intento. La respuesta incluirá
-saldo y próxima recuperación para evitar una consulta adicional.
+El diseño aceptado exige conexión para comprobar respuestas gratuitas antes de
+mostrar el resultado. ServerTec ya evalúa las reglas de su catálogo instalado y
+confirma intento, resultado y descuento juntos, con idempotencia por intento.
+La respuesta incluye saldo y próxima recuperación para evitar otra consulta.
 
 La app podrá leer, escuchar recursos instalados y preparar respuestas offline.
 Una estimación local de recarga no autorizará evaluaciones ni modificará el
@@ -165,10 +172,11 @@ saldo del servidor. `offline_hearts.py` conserva el experimento anterior para QA
 no lo importa el servicio y su enfoque de recibos offline no debe activarse.
 Las nuevas reglas sustituyen ese plan anterior.
 
-Pendiente en ServerTec: catálogo y evaluador autoritativos, idempotencia completa
-de evaluación, pruebas de interrupción y repetición, verificación de revocación
-real Firebase, política pública de registro, respaldo externo y restauración,
-auditoría de dependencias, carga y acceso remoto.
+Pendiente en ServerTec: ampliar el catálogo y los validadores al resto del
+currículo, verificación de correos/vinculación y revocación real Firebase,
+sincronización automática completa, política pública de registro, respaldo
+externo y restauración, carga y acceso remoto. La evaluación inicial ya pasó
+pruebas de interrupción, reintento, concurrencia y fusión.
 
 La integración Android es una fase posterior en su repositorio y rama autorizados.
 Los ajustes permanecen locales; sólo el progreso curricular completado se prevé
@@ -188,4 +196,4 @@ compra y verificación independiente; esta entrega no concede Premium.
 
 Las pruebas se ejecutan en Linux con Python 3.13; eso no equivale a Windows,
 Honor o LDPlayer. `RESULTADOS.md` conserva los resultados anteriores y
-`HISTORIALES.md` registra las comprobaciones específicas de esta etapa.
+`HISTORIALES.md` y `EVALUACIONES.md` describen los contratos implementados.

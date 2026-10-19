@@ -23,13 +23,15 @@ from cryptography import x509
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, ConfigDict, Field, SecretStr
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, ValidationError
 from starlette.concurrency import run_in_threadpool
 
 from portable_settings import PORTABLE_NAMESPACES, validate_portable_settings
 from accounts import AccountError, AccountStore
 from account_ledger import AccountLedger, LedgerError
 from consumption_groups import GroupLedger
+from exercise_catalog import CatalogError, ExerciseCatalog
+from evaluations import EvaluationService
 
 HOUR_MS = 3_600_000
 CAPACITIES = {"programming": 8, "math_physics": 12}
@@ -554,8 +556,29 @@ class DeviceConfirmation(AuthBody):
     confirmation_token: SecretStr = Field(min_length=1, max_length=128)
 
 
+class EvaluationRequest(AuthBody):
+    attempt_id: str = Field(min_length=36, max_length=36)
+    exercise_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_./:-]{0,255}$")
+    exercise_version: str = Field(pattern=r"^[0-9a-f]{64}$")
+    answer: Any
+
+
+def _unique_json_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate JSON field")
+        result[key] = value
+    return result
+
+
+def _reject_json_constant(value):
+    raise ValueError("non-finite JSON number")
+
+
 def create_app(settings: Settings, db: Database | None = None, verifier=None,
-               accounts: AccountStore | None = None) -> FastAPI:
+               accounts: AccountStore | None = None,
+               catalog: ExerciseCatalog | None = None) -> FastAPI:
     settings.validate()
     database = db or Database(settings.state / "servertec.db")
     identity = verifier or FirebaseVerifier(settings.project_id)
@@ -568,6 +591,9 @@ def create_app(settings: Settings, db: Database | None = None, verifier=None,
         firebase_project="" if settings.testing else settings.project_id)
     groups = GroupLedger(database, account_store, ledger, devices)
     account_store.on_enroll = groups.enroll
+    authoritative_catalog = (ExerciseCatalog.from_file(Path(__file__).with_name("rules-catalog.json"))
+                             if catalog is None else catalog)
+    evaluator = EvaluationService(groups, authoritative_catalog)
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, debug=False)
     app.add_middleware(SmallBodies)
 
@@ -596,11 +622,15 @@ def create_app(settings: Settings, db: Database | None = None, verifier=None,
     async def ledger_error(request, error):
         return JSONResponse({"error": error.code}, error.status)
 
+    @app.exception_handler(CatalogError)
+    async def catalog_error(request, error):
+        return JSONResponse({"error": error.code}, error.status)
+
     @app.exception_handler(RequestValidationError)
     async def invalid_body(request, error):
         return JSONResponse({"error": "invalid_request"}, 422)
 
-    @app.exception_handler(sqlite3.OperationalError)
+    @app.exception_handler(sqlite3.DatabaseError)
     async def storage_busy(request, error):
         # Never report success after a storage failure. Same operation_id is safe to retry.
         return JSONResponse({"error": "storage_unavailable"}, 503, headers={"Retry-After": "3"})
@@ -712,6 +742,23 @@ def create_app(settings: Settings, db: Database | None = None, verifier=None,
     @app.get("/v2/progress")
     def account_progress(uid: str = Depends(account_principal)):
         return database.progress(uid)
+
+    @app.post("/v2/evaluations")
+    async def evaluate_attempt(request: Request):
+        # Reject duplicate fields and non-standard JSON before Pydantic. Neither
+        # an answer, correctness flag, route nor identity gets coerced silently.
+        try:
+            data = json.loads(await request.body(), object_pairs_hook=_unique_json_object,
+                              parse_constant=_reject_json_constant)
+            body = EvaluationRequest.model_validate(data)
+        except (ValueError, UnicodeError, TypeError, RecursionError, ValidationError):
+            raise LedgerError("invalid_request", 422) from None
+        result = await run_in_threadpool(
+            evaluator.evaluate, session_token(request), request.headers.get("X-Android-Id"),
+            body.attempt_id, body.exercise_id, body.exercise_version, body.answer)
+        if result["status"] == "pending":
+            return JSONResponse(result, 409)
+        return result
 
     @app.get("/health")
     def health():

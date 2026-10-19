@@ -1,0 +1,889 @@
+{
+  "counts_installed": {
+    "en/math_physics/math_puzzle": 79,
+    "en/programming/multiple_choice": 25,
+    "en/programming/order_code": 2,
+    "en/programming/output_prediction": 13,
+    "es/math_physics/math_puzzle": 79,
+    "es/programming/multiple_choice": 29,
+    "es/programming/order_code": 2,
+    "es/programming/output_prediction": 16,
+    "fr/math_physics/math_puzzle": 79,
+    "fr/programming/multiple_choice": 25,
+    "fr/programming/order_code": 2,
+    "fr/programming/output_prediction": 13
+  },
+  "counts_omitted": {
+    "en/programming/cpp_compiler": 4,
+    "en/programming/drag_fill_code": 1,
+    "en/programming/fill_code": 6,
+    "en/programming/inline_fill_code": 1,
+    "es/programming/cpp_compiler": 4,
+    "es/programming/drag_fill_code": 1,
+    "es/programming/fill_code": 6,
+    "es/programming/inline_fill_code": 1,
+    "fr/programming/cpp_compiler": 4,
+    "fr/programming/drag_fill_code": 1,
+    "fr/programming/fill_code": 6,
+    "fr/programming/inline_fill_code": 1
+  },
+  "evaluator": "servertec-exercises-v1",
+  "installed_exercises": 364,
+  "omitted": [
+    {
+      "id": "en/programming/cpp_fundamentals__programas_y_ejecucion__fuente_compilacion_y_diagnostico/reparar_operador",
+      "kind": "fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "295f7c0ba99613395d252f7937ecce8012f64d0d",
+        "block_id": "reparar_operador",
+        "block_index": 4,
+        "block_sha256": "697817f20eabf7779c072d2603d461cc2dd52d5e5e5489a8dae80426399132fb",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__fuente_compilacion_y_diagnostico",
+        "page_index": 1,
+        "path": "app/src/main/assets/content/en/programming/cpp_fundamentals/programas_y_ejecucion/lesson_fuente_compilacion_y_diagnostico.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "en/programming/cpp_fundamentals__programas_y_ejecucion__fuente_compilacion_y_diagnostico/page_3_block_3",
+      "kind": "cpp_compiler",
+      "reason": "compiler_execution_not_supported",
+      "source": {
+        "blob_sha": "295f7c0ba99613395d252f7937ecce8012f64d0d",
+        "block_id": "page_3_block_3",
+        "block_index": 3,
+        "block_sha256": "566f5dccd066bd5a3d04c28424bbcc39c2dfe08fd82e8bb6ece3c873b580a7b6",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__fuente_compilacion_y_diagnostico",
+        "page_index": 3,
+        "path": "app/src/main/assets/content/en/programming/cpp_fundamentals/programas_y_ejecucion/lesson_fuente_compilacion_y_diagnostico.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "en/programming/cpp_fundamentals__programas_y_ejecucion__fuente_compilacion_y_diagnostico/piezas_estructura",
+      "kind": "drag_fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "295f7c0ba99613395d252f7937ecce8012f64d0d",
+        "block_id": "piezas_estructura",
+        "block_index": 1,
+        "block_sha256": "2c8b03c37e2c1d3aedc7bed9bfac4fdeed9ed8128e76c36fe66b5c4f707c4d58",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__fuente_compilacion_y_diagnostico",
+        "page_index": 4,
+        "path": "app/src/main/assets/content/en/programming/cpp_fundamentals/programas_y_ejecucion/lesson_fuente_compilacion_y_diagnostico.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "en/programming/cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida/literal_construido",
+      "kind": "fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "4a60e724123282b478228a31e1a5630b1f2294f4",
+        "block_id": "literal_construido",
+        "block_index": 4,
+        "block_sha256": "c259b0e8a47c30dba810707f10b8b0b1b215ea0dea3876b7ab5b28026d2fb867",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida",
+        "page_index": 1,
+        "path": "app/src/main/assets/content/en/programming/cpp_fundamentals/programas_y_ejecucion/lesson_primer_programa_y_salida.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "en/programming/cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida/operador_salida",
+      "kind": "fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "4a60e724123282b478228a31e1a5630b1f2294f4",
+        "block_id": "operador_salida",
+        "block_index": 4,
+        "block_sha256": "b4677b38b71bbe6afe921a87a75a5138c0de7fd0cc10cc773f86cac82aaeb595",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida",
+        "page_index": 2,
+        "path": "app/src/main/assets/content/en/programming/cpp_fundamentals/programas_y_ejecucion/lesson_primer_programa_y_salida.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "en/programming/cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida/terminador_salida",
+      "kind": "fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "4a60e724123282b478228a31e1a5630b1f2294f4",
+        "block_id": "terminador_salida",
+        "block_index": 5,
+        "block_sha256": "35ba77ef3aca999b966f897949abf68a806381b7bb3bbdf5afcf80fdd6ee8b7c",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida",
+        "page_index": 2,
+        "path": "app/src/main/assets/content/en/programming/cpp_fundamentals/programas_y_ejecucion/lesson_primer_programa_y_salida.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "en/programming/cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida/page_4_block_2",
+      "kind": "cpp_compiler",
+      "reason": "compiler_execution_not_supported",
+      "source": {
+        "blob_sha": "4a60e724123282b478228a31e1a5630b1f2294f4",
+        "block_id": "page_4_block_2",
+        "block_index": 2,
+        "block_sha256": "def02c31a103c600940d3f3202d868c45359f15286dcaeb348802c83f4d842be",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida",
+        "page_index": 4,
+        "path": "app/src/main/assets/content/en/programming/cpp_fundamentals/programas_y_ejecucion/lesson_primer_programa_y_salida.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "en/programming/cpp_fundamentals__programas_y_ejecucion__resolver_probar_y_recuperar/literal_informe",
+      "kind": "fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "db5c90d96c17961a3adcef953c77070cae09556a",
+        "block_id": "literal_informe",
+        "block_index": 3,
+        "block_sha256": "a783aff4cfde0a2e5d3ae79a0a5b8e3457e62c13a2ec56a1e80c80f96ca3bb28",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__resolver_probar_y_recuperar",
+        "page_index": 0,
+        "path": "app/src/main/assets/content/en/programming/cpp_fundamentals/programas_y_ejecucion/lesson_resolver_probar_y_recuperar.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "en/programming/cpp_fundamentals__programas_y_ejecucion__resolver_probar_y_recuperar/recuperar_punto_coma",
+      "kind": "fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "db5c90d96c17961a3adcef953c77070cae09556a",
+        "block_id": "recuperar_punto_coma",
+        "block_index": 3,
+        "block_sha256": "ef2645521af9a8557a1637bddc78b9e9683e93fb40313b4c126aa08c84eec6f1",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__resolver_probar_y_recuperar",
+        "page_index": 2,
+        "path": "app/src/main/assets/content/en/programming/cpp_fundamentals/programas_y_ejecucion/lesson_resolver_probar_y_recuperar.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "en/programming/cpp_fundamentals__programas_y_ejecucion__resolver_probar_y_recuperar/page_3_block_2",
+      "kind": "cpp_compiler",
+      "reason": "compiler_execution_not_supported",
+      "source": {
+        "blob_sha": "db5c90d96c17961a3adcef953c77070cae09556a",
+        "block_id": "page_3_block_2",
+        "block_index": 2,
+        "block_sha256": "496fce1a825151e0ba5d2b28ce1d6034143102503091a8674109ca9c6d3b9364",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__resolver_probar_y_recuperar",
+        "page_index": 3,
+        "path": "app/src/main/assets/content/en/programming/cpp_fundamentals/programas_y_ejecucion/lesson_resolver_probar_y_recuperar.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "en/programming/cpp_fundamentals__programas_y_ejecucion__texto_secuencia_y_formato/literal_y_operador",
+      "kind": "inline_fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "f6f09b677d4fad2eb20ffcc4c70ed38908974653",
+        "block_id": "literal_y_operador",
+        "block_index": 1,
+        "block_sha256": "02c6017ff07690ed58951a2a1c321c6565afd8a915e7dc49f53488a9d0254a0a",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__texto_secuencia_y_formato",
+        "page_index": 4,
+        "path": "app/src/main/assets/content/en/programming/cpp_fundamentals/programas_y_ejecucion/lesson_texto_secuencia_y_formato.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "en/programming/cpp_fundamentals__programas_y_ejecucion__texto_secuencia_y_formato/page_6_block_2",
+      "kind": "cpp_compiler",
+      "reason": "compiler_execution_not_supported",
+      "source": {
+        "blob_sha": "f6f09b677d4fad2eb20ffcc4c70ed38908974653",
+        "block_id": "page_6_block_2",
+        "block_index": 2,
+        "block_sha256": "4ba75d9e9550fa3fd85890d47ec1eaed73a9e2e23a2f083ca8b38c31456113c9",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__texto_secuencia_y_formato",
+        "page_index": 6,
+        "path": "app/src/main/assets/content/en/programming/cpp_fundamentals/programas_y_ejecucion/lesson_texto_secuencia_y_formato.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "es/programming/cpp_fundamentals__programas_y_ejecucion__fuente_compilacion_y_diagnostico/reparar_operador",
+      "kind": "fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "21e491a8c566adc1369c7a8a4138be43dd0f2075",
+        "block_id": "reparar_operador",
+        "block_index": 4,
+        "block_sha256": "7d3f95a9631a99505f8dc3e6cbb05a1e08f901736ac10f176f59f56ac205ad26",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__fuente_compilacion_y_diagnostico",
+        "page_index": 1,
+        "path": "app/src/main/assets/content/es/programming/cpp_fundamentals/programas_y_ejecucion/lesson_fuente_compilacion_y_diagnostico.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "es/programming/cpp_fundamentals__programas_y_ejecucion__fuente_compilacion_y_diagnostico/page_3_block_3",
+      "kind": "cpp_compiler",
+      "reason": "compiler_execution_not_supported",
+      "source": {
+        "blob_sha": "21e491a8c566adc1369c7a8a4138be43dd0f2075",
+        "block_id": "page_3_block_3",
+        "block_index": 3,
+        "block_sha256": "7b398b8e223d919ef377b45c35b62d305eb48b85cf0db9bc69424792c9517ee8",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__fuente_compilacion_y_diagnostico",
+        "page_index": 3,
+        "path": "app/src/main/assets/content/es/programming/cpp_fundamentals/programas_y_ejecucion/lesson_fuente_compilacion_y_diagnostico.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "es/programming/cpp_fundamentals__programas_y_ejecucion__fuente_compilacion_y_diagnostico/piezas_estructura",
+      "kind": "drag_fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "21e491a8c566adc1369c7a8a4138be43dd0f2075",
+        "block_id": "piezas_estructura",
+        "block_index": 1,
+        "block_sha256": "108fbe1fe5bec1b88e7e7e78e063c38c3d2ebf540ebff33277fcc0b5ec9f9368",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__fuente_compilacion_y_diagnostico",
+        "page_index": 4,
+        "path": "app/src/main/assets/content/es/programming/cpp_fundamentals/programas_y_ejecucion/lesson_fuente_compilacion_y_diagnostico.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "es/programming/cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida/literal_construido",
+      "kind": "fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "35ead16491ce9b8336348e4fc8d4707aad8b6851",
+        "block_id": "literal_construido",
+        "block_index": 4,
+        "block_sha256": "d5bbcae34d09c24c17b992dbc6c5e5fe89f97e1260021b866a3d8dc728d5ca81",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida",
+        "page_index": 1,
+        "path": "app/src/main/assets/content/es/programming/cpp_fundamentals/programas_y_ejecucion/lesson_primer_programa_y_salida.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "es/programming/cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida/operador_salida",
+      "kind": "fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "35ead16491ce9b8336348e4fc8d4707aad8b6851",
+        "block_id": "operador_salida",
+        "block_index": 4,
+        "block_sha256": "ee8ecf3f7924e8e9c8406ba3bc1a7d029363c940a1072af48b1a6afa935175f4",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida",
+        "page_index": 2,
+        "path": "app/src/main/assets/content/es/programming/cpp_fundamentals/programas_y_ejecucion/lesson_primer_programa_y_salida.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "es/programming/cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida/terminador_salida",
+      "kind": "fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "35ead16491ce9b8336348e4fc8d4707aad8b6851",
+        "block_id": "terminador_salida",
+        "block_index": 5,
+        "block_sha256": "fb42402affc6aaac0b56b08601297e662bac91d3d3713c88fcfc1c8488e58f72",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida",
+        "page_index": 2,
+        "path": "app/src/main/assets/content/es/programming/cpp_fundamentals/programas_y_ejecucion/lesson_primer_programa_y_salida.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "es/programming/cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida/page_4_block_2",
+      "kind": "cpp_compiler",
+      "reason": "compiler_execution_not_supported",
+      "source": {
+        "blob_sha": "35ead16491ce9b8336348e4fc8d4707aad8b6851",
+        "block_id": "page_4_block_2",
+        "block_index": 2,
+        "block_sha256": "1ef70928aa6f81e1dc4b247630cb42887579f51bd79095b56162b53b5d801dfa",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida",
+        "page_index": 4,
+        "path": "app/src/main/assets/content/es/programming/cpp_fundamentals/programas_y_ejecucion/lesson_primer_programa_y_salida.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "es/programming/cpp_fundamentals__programas_y_ejecucion__resolver_probar_y_recuperar/literal_informe",
+      "kind": "fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "b1bb601bb4129fd05bac808ca2703c574fb5cfcc",
+        "block_id": "literal_informe",
+        "block_index": 3,
+        "block_sha256": "632040d0c455ee104e9727c86e28c9bfcb715d262329c8a25e795e464eb06d39",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__resolver_probar_y_recuperar",
+        "page_index": 0,
+        "path": "app/src/main/assets/content/es/programming/cpp_fundamentals/programas_y_ejecucion/lesson_resolver_probar_y_recuperar.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "es/programming/cpp_fundamentals__programas_y_ejecucion__resolver_probar_y_recuperar/recuperar_punto_coma",
+      "kind": "fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "b1bb601bb4129fd05bac808ca2703c574fb5cfcc",
+        "block_id": "recuperar_punto_coma",
+        "block_index": 3,
+        "block_sha256": "462f9f360c9b97b3cbed5d80a596de2756ba68c1a833864d507cbd1c9725a98a",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__resolver_probar_y_recuperar",
+        "page_index": 2,
+        "path": "app/src/main/assets/content/es/programming/cpp_fundamentals/programas_y_ejecucion/lesson_resolver_probar_y_recuperar.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "es/programming/cpp_fundamentals__programas_y_ejecucion__resolver_probar_y_recuperar/page_3_block_2",
+      "kind": "cpp_compiler",
+      "reason": "compiler_execution_not_supported",
+      "source": {
+        "blob_sha": "b1bb601bb4129fd05bac808ca2703c574fb5cfcc",
+        "block_id": "page_3_block_2",
+        "block_index": 2,
+        "block_sha256": "308a247bb66934ae2c6efa7d2328c78f0079770ea6a6c4262025286b027cdfe1",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__resolver_probar_y_recuperar",
+        "page_index": 3,
+        "path": "app/src/main/assets/content/es/programming/cpp_fundamentals/programas_y_ejecucion/lesson_resolver_probar_y_recuperar.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "es/programming/cpp_fundamentals__programas_y_ejecucion__texto_secuencia_y_formato/literal_y_operador",
+      "kind": "inline_fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "25cf39496ca6be2173d4352ad0c3748a7ed5c8d6",
+        "block_id": "literal_y_operador",
+        "block_index": 1,
+        "block_sha256": "93fed95d76097616989d8abde611f879d2c48bd1f3032851ecbd43bef4044241",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__texto_secuencia_y_formato",
+        "page_index": 4,
+        "path": "app/src/main/assets/content/es/programming/cpp_fundamentals/programas_y_ejecucion/lesson_texto_secuencia_y_formato.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "es/programming/cpp_fundamentals__programas_y_ejecucion__texto_secuencia_y_formato/page_6_block_2",
+      "kind": "cpp_compiler",
+      "reason": "compiler_execution_not_supported",
+      "source": {
+        "blob_sha": "25cf39496ca6be2173d4352ad0c3748a7ed5c8d6",
+        "block_id": "page_6_block_2",
+        "block_index": 2,
+        "block_sha256": "4f0ecc4a031f20e29d02fb6d98c364acfb5be1695172f6b0114437901efc119c",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__texto_secuencia_y_formato",
+        "page_index": 6,
+        "path": "app/src/main/assets/content/es/programming/cpp_fundamentals/programas_y_ejecucion/lesson_texto_secuencia_y_formato.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "fr/programming/cpp_fundamentals__programas_y_ejecucion__fuente_compilacion_y_diagnostico/reparar_operador",
+      "kind": "fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "8f02ef555262744255f9ffc4ee63dfdab776689d",
+        "block_id": "reparar_operador",
+        "block_index": 4,
+        "block_sha256": "fdb1dd8d1b49a995c95010d75aacfbdf6571ed4f13b7a640fe6e9130a65b75b5",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__fuente_compilacion_y_diagnostico",
+        "page_index": 1,
+        "path": "app/src/main/assets/content/fr/programming/cpp_fundamentals/programas_y_ejecucion/lesson_fuente_compilacion_y_diagnostico.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "fr/programming/cpp_fundamentals__programas_y_ejecucion__fuente_compilacion_y_diagnostico/page_3_block_3",
+      "kind": "cpp_compiler",
+      "reason": "compiler_execution_not_supported",
+      "source": {
+        "blob_sha": "8f02ef555262744255f9ffc4ee63dfdab776689d",
+        "block_id": "page_3_block_3",
+        "block_index": 3,
+        "block_sha256": "9dfd9edda221fd28b30a492cd2c4b4a145ec7f792f5adaee7f6dee31413e6895",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__fuente_compilacion_y_diagnostico",
+        "page_index": 3,
+        "path": "app/src/main/assets/content/fr/programming/cpp_fundamentals/programas_y_ejecucion/lesson_fuente_compilacion_y_diagnostico.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "fr/programming/cpp_fundamentals__programas_y_ejecucion__fuente_compilacion_y_diagnostico/piezas_estructura",
+      "kind": "drag_fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "8f02ef555262744255f9ffc4ee63dfdab776689d",
+        "block_id": "piezas_estructura",
+        "block_index": 1,
+        "block_sha256": "736515bc07a9d1fd40eca10e0204992520b19c10f417693bb8347301d4e8edae",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__fuente_compilacion_y_diagnostico",
+        "page_index": 4,
+        "path": "app/src/main/assets/content/fr/programming/cpp_fundamentals/programas_y_ejecucion/lesson_fuente_compilacion_y_diagnostico.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "fr/programming/cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida/literal_construido",
+      "kind": "fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "bad33a8cb97b2f735ac68cf07fdf9101cb1e4da5",
+        "block_id": "literal_construido",
+        "block_index": 4,
+        "block_sha256": "7ed8accf8a3da851cb37faa62d92fedb69e4e3f617a926dc6ce81b1d0f8e1c53",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida",
+        "page_index": 1,
+        "path": "app/src/main/assets/content/fr/programming/cpp_fundamentals/programas_y_ejecucion/lesson_primer_programa_y_salida.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "fr/programming/cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida/operador_salida",
+      "kind": "fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "bad33a8cb97b2f735ac68cf07fdf9101cb1e4da5",
+        "block_id": "operador_salida",
+        "block_index": 4,
+        "block_sha256": "3d5e9e0511298935d51cf7d04168d178153e544b610dd62af3e147157f26363e",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida",
+        "page_index": 2,
+        "path": "app/src/main/assets/content/fr/programming/cpp_fundamentals/programas_y_ejecucion/lesson_primer_programa_y_salida.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "fr/programming/cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida/terminador_salida",
+      "kind": "fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "bad33a8cb97b2f735ac68cf07fdf9101cb1e4da5",
+        "block_id": "terminador_salida",
+        "block_index": 5,
+        "block_sha256": "cd086d3273514208d0a88d8b79dc2a860f37ef95ddbfc3c53fc11a03efd631e6",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida",
+        "page_index": 2,
+        "path": "app/src/main/assets/content/fr/programming/cpp_fundamentals/programas_y_ejecucion/lesson_primer_programa_y_salida.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "fr/programming/cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida/page_4_block_2",
+      "kind": "cpp_compiler",
+      "reason": "compiler_execution_not_supported",
+      "source": {
+        "blob_sha": "bad33a8cb97b2f735ac68cf07fdf9101cb1e4da5",
+        "block_id": "page_4_block_2",
+        "block_index": 2,
+        "block_sha256": "801914d0d0b6092c1ff605fa40ab120c7fac35eafb616c20d003a5ab225291aa",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida",
+        "page_index": 4,
+        "path": "app/src/main/assets/content/fr/programming/cpp_fundamentals/programas_y_ejecucion/lesson_primer_programa_y_salida.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "fr/programming/cpp_fundamentals__programas_y_ejecucion__resolver_probar_y_recuperar/literal_informe",
+      "kind": "fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "4bfe6e6a22c17bd226231d94220ddce140dc642a",
+        "block_id": "literal_informe",
+        "block_index": 3,
+        "block_sha256": "367cc5137fa7d9196e2a743060c494eae4e3093e883679f1154d3201f5a6e47c",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__resolver_probar_y_recuperar",
+        "page_index": 0,
+        "path": "app/src/main/assets/content/fr/programming/cpp_fundamentals/programas_y_ejecucion/lesson_resolver_probar_y_recuperar.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "fr/programming/cpp_fundamentals__programas_y_ejecucion__resolver_probar_y_recuperar/recuperar_punto_coma",
+      "kind": "fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "4bfe6e6a22c17bd226231d94220ddce140dc642a",
+        "block_id": "recuperar_punto_coma",
+        "block_index": 3,
+        "block_sha256": "ffc4da5f64c27fc4aa78c44f5c22e391d9e0b964991fa3cca2560ddf6bafa224",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__resolver_probar_y_recuperar",
+        "page_index": 2,
+        "path": "app/src/main/assets/content/fr/programming/cpp_fundamentals/programas_y_ejecucion/lesson_resolver_probar_y_recuperar.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "fr/programming/cpp_fundamentals__programas_y_ejecucion__resolver_probar_y_recuperar/page_3_block_2",
+      "kind": "cpp_compiler",
+      "reason": "compiler_execution_not_supported",
+      "source": {
+        "blob_sha": "4bfe6e6a22c17bd226231d94220ddce140dc642a",
+        "block_id": "page_3_block_2",
+        "block_index": 2,
+        "block_sha256": "1af410df39214650c605ea577c151de8b0725f8d6ee8a3a65e19954b81d02d8b",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__resolver_probar_y_recuperar",
+        "page_index": 3,
+        "path": "app/src/main/assets/content/fr/programming/cpp_fundamentals/programas_y_ejecucion/lesson_resolver_probar_y_recuperar.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "fr/programming/cpp_fundamentals__programas_y_ejecucion__texto_secuencia_y_formato/literal_y_operador",
+      "kind": "inline_fill_code",
+      "reason": "cpp_fill_normalization_not_ported",
+      "source": {
+        "blob_sha": "2a35544dd77466f96af9dcb8030a7efc98a18c9e",
+        "block_id": "literal_y_operador",
+        "block_index": 1,
+        "block_sha256": "5320bf24a306add03508a0e617b3a2ffab5ef79f53bfc9dbfca074743c30572f",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__texto_secuencia_y_formato",
+        "page_index": 4,
+        "path": "app/src/main/assets/content/fr/programming/cpp_fundamentals/programas_y_ejecucion/lesson_texto_secuencia_y_formato.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    },
+    {
+      "id": "fr/programming/cpp_fundamentals__programas_y_ejecucion__texto_secuencia_y_formato/page_6_block_2",
+      "kind": "cpp_compiler",
+      "reason": "compiler_execution_not_supported",
+      "source": {
+        "blob_sha": "2a35544dd77466f96af9dcb8030a7efc98a18c9e",
+        "block_id": "page_6_block_2",
+        "block_index": 2,
+        "block_sha256": "15c580915e6a18f0d2ca51c882f5079f143e2f16b47f84aae502afff0b116cbd",
+        "commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+        "lesson_id": "cpp_fundamentals__programas_y_ejecucion__texto_secuencia_y_formato",
+        "page_index": 6,
+        "path": "app/src/main/assets/content/fr/programming/cpp_fundamentals/programas_y_ejecucion/lesson_texto_secuencia_y_formato.json",
+        "repository": "SimDynamics/LearnGraphicsProgramming"
+      }
+    }
+  ],
+  "omitted_interactive_blocks": 36,
+  "repository": "SimDynamics/LearnGraphicsProgramming",
+  "schema_version": 1,
+  "scope": "Only the listed source lessons; this is not the complete curriculum.",
+  "source_commit": "621f35c5565b1f02c39576a70f657b929f1970b4",
+  "sources": [
+    {
+      "blob_sha": "efd7772450dab52a01cd16ccf8f0e7a508922bfb",
+      "installed_exercises": 13,
+      "lesson_id": "math_course_01__numeros_y_operaciones__enteros_y_recta",
+      "non_interactive_blocks": 16,
+      "omitted_interactive_blocks": 0,
+      "path": "app/src/main/assets/content/en/math_physics/math_course_01/numeros_y_operaciones/lesson_enteros_y_recta.json"
+    },
+    {
+      "blob_sha": "3ac9d472517ee0612d5dd332dcca7758be884d21",
+      "installed_exercises": 9,
+      "lesson_id": "math_course_01__numeros_y_operaciones__fluidez_operaciones_enteros",
+      "non_interactive_blocks": 5,
+      "omitted_interactive_blocks": 0,
+      "path": "app/src/main/assets/content/en/math_physics/math_course_01/numeros_y_operaciones/lesson_fluidez_operaciones_enteros.json"
+    },
+    {
+      "blob_sha": "4aa1dd1b1cc96d3073b79026cc1fec67dc39c3b7",
+      "installed_exercises": 13,
+      "lesson_id": "math_course_01__numeros_y_operaciones__magnitudes_y_numeracion",
+      "non_interactive_blocks": 15,
+      "omitted_interactive_blocks": 0,
+      "path": "app/src/main/assets/content/en/math_physics/math_course_01/numeros_y_operaciones/lesson_magnitudes_y_numeracion.json"
+    },
+    {
+      "blob_sha": "4c760eec95ca7899393d2b55c4dfd85a86b4ba10",
+      "installed_exercises": 16,
+      "lesson_id": "math_course_01__numeros_y_operaciones__multiplicar_y_dividir_enteros",
+      "non_interactive_blocks": 15,
+      "omitted_interactive_blocks": 0,
+      "path": "app/src/main/assets/content/en/math_physics/math_course_01/numeros_y_operaciones/lesson_multiplicar_y_dividir_enteros.json"
+    },
+    {
+      "blob_sha": "281cc6f9d338dca8c361b941ea217bdd5474f955",
+      "installed_exercises": 12,
+      "lesson_id": "math_course_01__numeros_y_operaciones__sintesis_numeros_operaciones",
+      "non_interactive_blocks": 11,
+      "omitted_interactive_blocks": 0,
+      "path": "app/src/main/assets/content/en/math_physics/math_course_01/numeros_y_operaciones/lesson_sintesis_numeros_operaciones.json"
+    },
+    {
+      "blob_sha": "b9e0ade99de72b427f9f78a59d627ecacf0398b1",
+      "installed_exercises": 16,
+      "lesson_id": "math_course_01__numeros_y_operaciones__sumar_y_restar_enteros",
+      "non_interactive_blocks": 16,
+      "omitted_interactive_blocks": 0,
+      "path": "app/src/main/assets/content/en/math_physics/math_course_01/numeros_y_operaciones/lesson_sumar_y_restar_enteros.json"
+    },
+    {
+      "blob_sha": "295f7c0ba99613395d252f7937ecce8012f64d0d",
+      "installed_exercises": 6,
+      "lesson_id": "cpp_fundamentals__programas_y_ejecucion__fuente_compilacion_y_diagnostico",
+      "non_interactive_blocks": 19,
+      "omitted_interactive_blocks": 3,
+      "path": "app/src/main/assets/content/en/programming/cpp_fundamentals/programas_y_ejecucion/lesson_fuente_compilacion_y_diagnostico.json"
+    },
+    {
+      "blob_sha": "4a60e724123282b478228a31e1a5630b1f2294f4",
+      "installed_exercises": 6,
+      "lesson_id": "cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida",
+      "non_interactive_blocks": 19,
+      "omitted_interactive_blocks": 4,
+      "path": "app/src/main/assets/content/en/programming/cpp_fundamentals/programas_y_ejecucion/lesson_primer_programa_y_salida.json"
+    },
+    {
+      "blob_sha": "3d371d65eeab42ea8b5880d7a6d5c1740bef37e5",
+      "installed_exercises": 7,
+      "lesson_id": "cpp_fundamentals__programas_y_ejecucion__problemas_instrucciones_y_resultados",
+      "non_interactive_blocks": 13,
+      "omitted_interactive_blocks": 0,
+      "path": "app/src/main/assets/content/en/programming/cpp_fundamentals/programas_y_ejecucion/lesson_problemas_instrucciones_y_resultados.json"
+    },
+    {
+      "blob_sha": "db5c90d96c17961a3adcef953c77070cae09556a",
+      "installed_exercises": 8,
+      "lesson_id": "cpp_fundamentals__programas_y_ejecucion__resolver_probar_y_recuperar",
+      "non_interactive_blocks": 17,
+      "omitted_interactive_blocks": 3,
+      "path": "app/src/main/assets/content/en/programming/cpp_fundamentals/programas_y_ejecucion/lesson_resolver_probar_y_recuperar.json"
+    },
+    {
+      "blob_sha": "f6f09b677d4fad2eb20ffcc4c70ed38908974653",
+      "installed_exercises": 13,
+      "lesson_id": "cpp_fundamentals__programas_y_ejecucion__texto_secuencia_y_formato",
+      "non_interactive_blocks": 25,
+      "omitted_interactive_blocks": 2,
+      "path": "app/src/main/assets/content/en/programming/cpp_fundamentals/programas_y_ejecucion/lesson_texto_secuencia_y_formato.json"
+    },
+    {
+      "blob_sha": "66ba03e588a05ad5f20cc20adee623fbebab72db",
+      "installed_exercises": 13,
+      "lesson_id": "math_course_01__numeros_y_operaciones__enteros_y_recta",
+      "non_interactive_blocks": 16,
+      "omitted_interactive_blocks": 0,
+      "path": "app/src/main/assets/content/es/math_physics/math_course_01/numeros_y_operaciones/lesson_enteros_y_recta.json"
+    },
+    {
+      "blob_sha": "1aa72a8c041d5f77a3431afa50feeddf0d8e7216",
+      "installed_exercises": 9,
+      "lesson_id": "math_course_01__numeros_y_operaciones__fluidez_operaciones_enteros",
+      "non_interactive_blocks": 5,
+      "omitted_interactive_blocks": 0,
+      "path": "app/src/main/assets/content/es/math_physics/math_course_01/numeros_y_operaciones/lesson_fluidez_operaciones_enteros.json"
+    },
+    {
+      "blob_sha": "1bd8db0b726cd8a3cf715de1578d517f29c3b1f8",
+      "installed_exercises": 13,
+      "lesson_id": "math_course_01__numeros_y_operaciones__magnitudes_y_numeracion",
+      "non_interactive_blocks": 15,
+      "omitted_interactive_blocks": 0,
+      "path": "app/src/main/assets/content/es/math_physics/math_course_01/numeros_y_operaciones/lesson_magnitudes_y_numeracion.json"
+    },
+    {
+      "blob_sha": "219a82a384a721ca3e2ee7f2f417f3e24fac64ce",
+      "installed_exercises": 16,
+      "lesson_id": "math_course_01__numeros_y_operaciones__multiplicar_y_dividir_enteros",
+      "non_interactive_blocks": 15,
+      "omitted_interactive_blocks": 0,
+      "path": "app/src/main/assets/content/es/math_physics/math_course_01/numeros_y_operaciones/lesson_multiplicar_y_dividir_enteros.json"
+    },
+    {
+      "blob_sha": "a6fa822cfd2d3d12392f7ca733244ece8644a305",
+      "installed_exercises": 12,
+      "lesson_id": "math_course_01__numeros_y_operaciones__sintesis_numeros_operaciones",
+      "non_interactive_blocks": 11,
+      "omitted_interactive_blocks": 0,
+      "path": "app/src/main/assets/content/es/math_physics/math_course_01/numeros_y_operaciones/lesson_sintesis_numeros_operaciones.json"
+    },
+    {
+      "blob_sha": "d346824695eb2db75524ac74c8ac41ffae56403f",
+      "installed_exercises": 16,
+      "lesson_id": "math_course_01__numeros_y_operaciones__sumar_y_restar_enteros",
+      "non_interactive_blocks": 16,
+      "omitted_interactive_blocks": 0,
+      "path": "app/src/main/assets/content/es/math_physics/math_course_01/numeros_y_operaciones/lesson_sumar_y_restar_enteros.json"
+    },
+    {
+      "blob_sha": "21e491a8c566adc1369c7a8a4138be43dd0f2075",
+      "installed_exercises": 7,
+      "lesson_id": "cpp_fundamentals__programas_y_ejecucion__fuente_compilacion_y_diagnostico",
+      "non_interactive_blocks": 19,
+      "omitted_interactive_blocks": 3,
+      "path": "app/src/main/assets/content/es/programming/cpp_fundamentals/programas_y_ejecucion/lesson_fuente_compilacion_y_diagnostico.json"
+    },
+    {
+      "blob_sha": "35ead16491ce9b8336348e4fc8d4707aad8b6851",
+      "installed_exercises": 7,
+      "lesson_id": "cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida",
+      "non_interactive_blocks": 18,
+      "omitted_interactive_blocks": 4,
+      "path": "app/src/main/assets/content/es/programming/cpp_fundamentals/programas_y_ejecucion/lesson_primer_programa_y_salida.json"
+    },
+    {
+      "blob_sha": "4d99df6269a1ad530ed710334f489db17df2a756",
+      "installed_exercises": 7,
+      "lesson_id": "cpp_fundamentals__programas_y_ejecucion__problemas_instrucciones_y_resultados",
+      "non_interactive_blocks": 13,
+      "omitted_interactive_blocks": 0,
+      "path": "app/src/main/assets/content/es/programming/cpp_fundamentals/programas_y_ejecucion/lesson_problemas_instrucciones_y_resultados.json"
+    },
+    {
+      "blob_sha": "b1bb601bb4129fd05bac808ca2703c574fb5cfcc",
+      "installed_exercises": 12,
+      "lesson_id": "cpp_fundamentals__programas_y_ejecucion__resolver_probar_y_recuperar",
+      "non_interactive_blocks": 15,
+      "omitted_interactive_blocks": 3,
+      "path": "app/src/main/assets/content/es/programming/cpp_fundamentals/programas_y_ejecucion/lesson_resolver_probar_y_recuperar.json"
+    },
+    {
+      "blob_sha": "25cf39496ca6be2173d4352ad0c3748a7ed5c8d6",
+      "installed_exercises": 14,
+      "lesson_id": "cpp_fundamentals__programas_y_ejecucion__texto_secuencia_y_formato",
+      "non_interactive_blocks": 24,
+      "omitted_interactive_blocks": 2,
+      "path": "app/src/main/assets/content/es/programming/cpp_fundamentals/programas_y_ejecucion/lesson_texto_secuencia_y_formato.json"
+    },
+    {
+      "blob_sha": "e357d50fde685c731d6ad473558a91645c0f5124",
+      "installed_exercises": 13,
+      "lesson_id": "math_course_01__numeros_y_operaciones__enteros_y_recta",
+      "non_interactive_blocks": 16,
+      "omitted_interactive_blocks": 0,
+      "path": "app/src/main/assets/content/fr/math_physics/math_course_01/numeros_y_operaciones/lesson_enteros_y_recta.json"
+    },
+    {
+      "blob_sha": "429c1ae19fe27d0481fa583fe0e2299aaf4ca38e",
+      "installed_exercises": 9,
+      "lesson_id": "math_course_01__numeros_y_operaciones__fluidez_operaciones_enteros",
+      "non_interactive_blocks": 5,
+      "omitted_interactive_blocks": 0,
+      "path": "app/src/main/assets/content/fr/math_physics/math_course_01/numeros_y_operaciones/lesson_fluidez_operaciones_enteros.json"
+    },
+    {
+      "blob_sha": "8d7a8012d4264f92d5438b338f5d9ffc16bf7499",
+      "installed_exercises": 13,
+      "lesson_id": "math_course_01__numeros_y_operaciones__magnitudes_y_numeracion",
+      "non_interactive_blocks": 15,
+      "omitted_interactive_blocks": 0,
+      "path": "app/src/main/assets/content/fr/math_physics/math_course_01/numeros_y_operaciones/lesson_magnitudes_y_numeracion.json"
+    },
+    {
+      "blob_sha": "cfc55258f5f78bd0d861b83084d0e62497e19490",
+      "installed_exercises": 16,
+      "lesson_id": "math_course_01__numeros_y_operaciones__multiplicar_y_dividir_enteros",
+      "non_interactive_blocks": 15,
+      "omitted_interactive_blocks": 0,
+      "path": "app/src/main/assets/content/fr/math_physics/math_course_01/numeros_y_operaciones/lesson_multiplicar_y_dividir_enteros.json"
+    },
+    {
+      "blob_sha": "0b58c4acdf73b8d2236db8d9201694798decf213",
+      "installed_exercises": 12,
+      "lesson_id": "math_course_01__numeros_y_operaciones__sintesis_numeros_operaciones",
+      "non_interactive_blocks": 11,
+      "omitted_interactive_blocks": 0,
+      "path": "app/src/main/assets/content/fr/math_physics/math_course_01/numeros_y_operaciones/lesson_sintesis_numeros_operaciones.json"
+    },
+    {
+      "blob_sha": "36cb40be06ef3de7f625ad2509a1c094c59b8c66",
+      "installed_exercises": 16,
+      "lesson_id": "math_course_01__numeros_y_operaciones__sumar_y_restar_enteros",
+      "non_interactive_blocks": 16,
+      "omitted_interactive_blocks": 0,
+      "path": "app/src/main/assets/content/fr/math_physics/math_course_01/numeros_y_operaciones/lesson_sumar_y_restar_enteros.json"
+    },
+    {
+      "blob_sha": "8f02ef555262744255f9ffc4ee63dfdab776689d",
+      "installed_exercises": 6,
+      "lesson_id": "cpp_fundamentals__programas_y_ejecucion__fuente_compilacion_y_diagnostico",
+      "non_interactive_blocks": 19,
+      "omitted_interactive_blocks": 3,
+      "path": "app/src/main/assets/content/fr/programming/cpp_fundamentals/programas_y_ejecucion/lesson_fuente_compilacion_y_diagnostico.json"
+    },
+    {
+      "blob_sha": "bad33a8cb97b2f735ac68cf07fdf9101cb1e4da5",
+      "installed_exercises": 6,
+      "lesson_id": "cpp_fundamentals__programas_y_ejecucion__primer_programa_y_salida",
+      "non_interactive_blocks": 19,
+      "omitted_interactive_blocks": 4,
+      "path": "app/src/main/assets/content/fr/programming/cpp_fundamentals/programas_y_ejecucion/lesson_primer_programa_y_salida.json"
+    },
+    {
+      "blob_sha": "9c8f73f8b33c7f9765b55bbe85d28db20241638d",
+      "installed_exercises": 7,
+      "lesson_id": "cpp_fundamentals__programas_y_ejecucion__problemas_instrucciones_y_resultados",
+      "non_interactive_blocks": 13,
+      "omitted_interactive_blocks": 0,
+      "path": "app/src/main/assets/content/fr/programming/cpp_fundamentals/programas_y_ejecucion/lesson_problemas_instrucciones_y_resultados.json"
+    },
+    {
+      "blob_sha": "4bfe6e6a22c17bd226231d94220ddce140dc642a",
+      "installed_exercises": 8,
+      "lesson_id": "cpp_fundamentals__programas_y_ejecucion__resolver_probar_y_recuperar",
+      "non_interactive_blocks": 17,
+      "omitted_interactive_blocks": 3,
+      "path": "app/src/main/assets/content/fr/programming/cpp_fundamentals/programas_y_ejecucion/lesson_resolver_probar_y_recuperar.json"
+    },
+    {
+      "blob_sha": "2a35544dd77466f96af9dcb8030a7efc98a18c9e",
+      "installed_exercises": 13,
+      "lesson_id": "cpp_fundamentals__programas_y_ejecucion__texto_secuencia_y_formato",
+      "non_interactive_blocks": 25,
+      "omitted_interactive_blocks": 2,
+      "path": "app/src/main/assets/content/fr/programming/cpp_fundamentals/programas_y_ejecucion/lesson_texto_secuencia_y_formato.json"
+    }
+  ],
+  "verified_engine_blobs": {
+    "app/src/main/java/com/learngraphicsprogramming/app/CppExerciseAnswers.kt": "9732172d9cb31c129ffb9c3f8eb160914b4fc3d5",
+    "app/src/main/java/com/learngraphicsprogramming/app/LessonActivity.kt": "d1d471a226f93418d552013a237741d08c2f5e1d",
+    "app/src/main/java/com/learngraphicsprogramming/app/math/MathAnswer.kt": "46af0e47c284a486555c81e72eb71851f46fcdde",
+    "app/src/main/java/com/learngraphicsprogramming/app/math/MathPuzzleRenderer.kt": "cd41bd57da1a38be37d6fc79a21f38133a22254b",
+    "app/src/main/java/com/learngraphicsprogramming/app/math/MathPuzzleSpec.kt": "c8ea1683694d08e8f553e87874d7602bb9d99449",
+    "app/src/main/java/com/learngraphicsprogramming/app/math/MathValidators.kt": "07df271a48befbceb7d8b2fc7e661a01708d7345"
+  }
+}

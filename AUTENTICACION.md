@@ -7,9 +7,9 @@ contraseña sin correo, acceso alternativo con Google/Firebase, recuperación
 local, sesiones, saldo canónico y lectura del progreso preservado.
 
 El servidor continúa limitado a loopback por manage.py. No se ha conectado el
-cliente Android ni abierto el router. Las evaluaciones de puzzles todavía no
-existen en v2: falta verificar la solución, registrar el intento y confirmar el
-descuento juntos antes de mostrar el resultado al estudiante.
+cliente Android ni abierto el router. La etapa posterior documentada en
+EVALUACIONES.md ya verifica respuestas de un catálogo inicial y confirma juntos
+el resultado, el descuento y el recibo en v2. Falta integrar ese flujo en Android.
 
 ## Identidad y registro
 
@@ -200,10 +200,11 @@ procedimiento de restauración comprobado.
 
 ## Qué falta para cumplir el flujo de evaluación completo
 
-El siguiente módulo debe cargar reglas curriculares aprobadas en el servidor,
-validar respuestas reales y guardar intento, resultado y descuento de forma
-atómica e idempotente. La respuesta incluirá saldo y próxima recuperación.
-Android deberá esperar esa confirmación antes de mostrar correcto/incorrecto.
+El módulo evaluations.py ya carga reglas curriculares aprobadas en el servidor
+y guarda intento, resultado y descuento de forma atómica e idempotente. Incluye
+saldo vigente y próxima recuperación. EVALUACIONES.md describe su catálogo inicial
+y los tipos todavía no admitidos. Falta integrar Android para que espere esa
+confirmación antes de mostrar correcto/incorrecto en las evaluaciones gratuitas.
 
 Después se probarán respuesta perdida, reintento, cierre abrupto, borrado,
 reinstalación y falta de conexión en la integración Android autorizada. La lectura,

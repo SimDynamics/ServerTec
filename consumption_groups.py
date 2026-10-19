@@ -398,10 +398,10 @@ class GroupLedger:
             raise LedgerError("device_confirmation_stale", 409)
         return result
 
-    def authorize_in_transaction(self, con, token, android_id):
+    def authorize_in_transaction(self, con, token, android_id, *, now=None):
         """Final gate for FREE evaluations; no account/group IDs from the client."""
         AccountLedger._require_transaction(con)
-        now = self._now()
+        now = self.legacy._now(now)
         account_id, _, device = self._actor(con, token, android_id, now)
         _, root, _, linked = self._scope(con, account_id, device)
         if not linked:
@@ -438,7 +438,7 @@ class GroupLedger:
         """Internal only: caller must store the verified evaluation and receipt.
 
         This primitive is NOT an evaluator and NOT idempotent on its own. The
-        future evaluator must key receipts by (authenticated account, attempt),
+        evaluator must key receipts by (authenticated account, attempt),
         never by the current root, then return results only after outer commit.
         """
         AccountLedger._require_transaction(con)

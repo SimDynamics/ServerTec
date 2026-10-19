@@ -1,4 +1,66 @@
-# Validación de la primera entrega
+# Resultados verificados de ServerTec
+
+## Evaluaciones autorizadas y recibos atómicos
+
+2026-10-19 UTC. Base remota revisada:
+`97941a5356e9e27c2cd10fb23a3a8daf800b06b6`, ServerTec/main.
+Entorno temporal Linux, **Python 3.13.16**, SQLite **3.53.1**, con las mismas
+versiones directas fijadas en requirements-test.txt. No hay dependencias nuevas.
+
+Comando completo ejecutado:
+
+```bash
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -X dev -m pytest -q \
+  -o faulthandler_timeout=40 -W error::ResourceWarning \
+  -W error::pytest.PytestUnraisableExceptionWarning
+```
+
+Resultado: **461 pruebas aprobadas y 26 subpruebas aprobadas, cero fallos,
+cero errores y cero omisiones**, en 34,64 segundos. Incluye la batería histórica
+completa. El informe JUnit cuenta 487 casos porque suma las 26 subpruebas.
+
+| Pruebas | Aprobadas |
+|---|---:|
+| Servicio: transacciones, recibos, corazones y fusiones | 72 nuevas |
+| API: cuerpos, autoridad, errores y HTTPS real | 26 nuevas |
+| Catálogo y evaluadores | 23 nuevas |
+| Importador curricular | 16 nuevas |
+| **Total de pruebas nuevas** | **137** |
+| Pruebas históricas | 324 |
+| **Total principal** | **461** |
+
+Se ejecutaron dos terminaciones reales de procesos, antes y después del commit,
+además de fallos SQLite en la creación del intento, inserción del resultado y
+confirmación del recibo. Se comprobó reintento tras reinicio, catálogo retirado y
+fusión; dos errores concurrentes con un corazón; A → B → A; protección del UUID
+pendiente; cero corazones sin revelar corrección; datos privados separados;
+sesiones revocadas y dispositivo no aceptado; deuda mayor que capacidad y reloj
+atrasado. Los errores de almacenamiento no devuelven una evaluación confirmada.
+
+La prueba HTTPS nueva usó sockets, certificados, scrypt y dos procesos Uvicorn
+reales: el segundo recuperó la sesión y el recibo guardados sin volver a cobrar.
+Se verificó persistencia en SQLite antes de considerar confirmada la respuesta,
+integridad de la base y ausencia de secretos en el log temporal. La autoprueba
+histórica de HTTPS también pasó sus **9/9** comprobaciones dentro de la batería.
+
+Catálogo publicado de esta etapa: **364 ejercicios** en 33 archivos de lección
+del commit Android `621f35c5565b1f02c39576a70f657b929f1970b4`, leído sin editar.
+Se verificaron los 33 hashes Git de las fuentes, la reproducción exacta de catálogo
+y cobertura, y 364 respuestas aceptadas tomadas de esos JSON. El informe enumera
+los 36 bloques interactivos no instalados; no se presentan como evaluables.
+La revisión independiente corrigió y comprobó dos diferencias Java/Python antes
+de esta ejecución: redondeo DECIMAL64 en el límite de finitud y dígitos astrales.
+
+La única advertencia fue una obsolescencia de BlockingPortal en Starlette/AnyIO;
+no hubo ResourceWarning ni excepciones de limpieza ignoradas. Las dependencias
+fijadas no se cambiaron para ocultar esa advertencia.
+
+No se ejecutó Windows/PowerShell, Honor, LDPlayer, Google/Billing reales ni
+acceso público/carga de producción. No se modificó el checkout Android ni el
+estado real de la PC. La app todavía no llama a este endpoint y la ampliación
+del catálogo sigue pendiente. Contrato y límites: EVALUACIONES.md.
+
+## Validación de la primera entrega
 
 2026-10-17. Ejecución local en entorno aislado Linux, Python 3.13.5.
 

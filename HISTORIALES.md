@@ -130,12 +130,12 @@ usan transacciones SQLite de escritura. Un fallo revierte todos los cambios del
 intento, no deja media unión ni consume la confirmación. No se ejecutan verificaciones
 de contraseña costosas ni llamadas externas dentro de esas transacciones.
 
-La primitiva debit_in_transaction está reservada al futuro evaluador. No tiene
-endpoint público, no verifica respuestas y NO es idempotente por sí sola. Ese
-evaluador deberá guardar su recibo por (cuenta autenticada, intento), no por raíz,
-para que una fusión no permita cobrar otra vez un reintento. Las pruebas incluyen
-un envoltorio mínimo de recibos para comprobar esa combinación bajo concurrencia;
-ese envoltorio es solo una prueba, no un evaluador de producción.
+La primitiva debit_in_transaction no tiene endpoint público, no verifica respuestas
+y NO es idempotente por sí sola. El módulo evaluations.py ahora realiza la
+evaluación autorizada y conserva los recibos por (cuenta autenticada, intento),
+sin depender de la raíz. Su recuperación después de una fusión no cobra otra vez.
+Las pruebas históricas de este archivo incluían un envoltorio mínimo de recibos;
+el contrato vigente y las pruebas del evaluador están en EVALUACIONES.md.
 
 ## Migración y operaciones locales
 
@@ -201,8 +201,9 @@ los datos reales de la PC. No se realizó una auditoría independiente externa.
 
 ## Lo que sigue pendiente
 
-Evaluador curricular autoritativo y recibos de intentos de producción; verificación
-de correos y vinculación acreditada de métodos de acceso; sincronización automática
+Ampliación del catálogo autorizado (la primera cobertura y los recibos ya están
+implementados, ver EVALUACIONES.md); verificación de correos y vinculación
+acreditada de métodos de acceso; sincronización automática
 completa del progreso; UI y transporte Android; migración de datos de la app;
 verificación real de Premium y Google; acceso remoto y pruebas en la PC del usuario.
 Este cambio prepara el servidor, no declara completada la integración del encargo.
