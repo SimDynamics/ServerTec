@@ -2,6 +2,8 @@
 
 Servidor propio para LearnGraphicsProgramming. Código aislado de Android. **No está conectado todavía a la app ni habilitado para Internet o Google Play.** No modifica APK, voces, Enter, progreso local, router, DNS ni firewall.
 
+Este repositorio es código público de portafolio. Las direcciones IP y los dominios personales se sustituyeron por valores reservados en la documentación y el historial publicado. Para usar los ejemplos, configura tus propios endpoints; los valores de ejemplo no identifican un servicio activo.
+
 ## Ubicación y alcance
 
 **Menú web aislado:** [DEMO-WEB.md](DEMO-WEB.md) conserva la QA local anterior.
@@ -11,7 +13,7 @@ documenta la investigación actual: no se ha acreditado una combinación compati
 de nombre, certificado y continuidad; no se integra un servicio provisional.
 No hay publicación pública ni validación externa en Chrome confirmadas.
 
-**Repositorio actual:** `SimDynamics/ServerTec` (privado, rama `main`), independiente de `SimDynamics/LearnGraphicsProgramming`. **Copia local:** `E:\PersonalFiles\Projects\ServerTec`. La migración por Git y la retirada de `server/ServerTec` del árbol `main` de la app ya se completaron. El repositorio público de recursos no participa. Claves privadas, certificados y SQLite permanecen fuera del código.
+**Repositorio actual:** `SimDynamics/ServerTec` (público, rama `main`), independiente de `SimDynamics/LearnGraphicsProgramming`. **Copia local:** `E:\PersonalFiles\Projects\ServerTec`. La migración por Git y la retirada de `server/ServerTec` del árbol `main` de la app ya se completaron. El repositorio público de recursos no participa. Claves privadas, certificados y SQLite permanecen fuera del código.
 
 Esta implementación usa Python 3.13+, FastAPI, Uvicorn, SQLite, cryptography y PyJWT. Son herramientas ejecutadas en tu equipo, sin suscripción de hosting ni cuota de operaciones de un proveedor. **No es el ejemplo previo en ASP.NET/C#: es una implementación Python independiente que se ha podido ejecutar y probar en este entorno.** No es un servicio de FastAPI alojado. La descarga de dependencias usa el registro de paquetes; el servidor no depende de ese registro después de instalarlas.
 
@@ -31,7 +33,7 @@ El código Git permanece en `E:\PersonalFiles\Projects\ServerTec`. El almacenami
 
 ## Primera ejecución en Windows
 
-Tras clonar el repositorio privado en `E:\PersonalFiles\Projects\ServerTec`, **las actualizaciones posteriores llegan por Git, no por ZIP**. El usuario recibe las actualizaciones mediante Fetch/Pull en GitHub Desktop, seleccionando ServerTec y main; conservar cualquier cambio local propio. Abrir PowerShell normal, sin administrador:
+Tras clonar el repositorio público en `E:\PersonalFiles\Projects\ServerTec`, **las actualizaciones posteriores llegan por Git, no por ZIP**. El usuario recibe las actualizaciones mediante Fetch/Pull en GitHub Desktop, seleccionando ServerTec y main; conservar cualquier cambio local propio. Abrir PowerShell normal, sin administrador:
 
 ```powershell
 Set-Location -LiteralPath 'E:\PersonalFiles\Projects\ServerTec'
