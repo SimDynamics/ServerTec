@@ -1,5 +1,7 @@
 # Resultados verificados de ServerTec
 
+> **Nota de ubicación (2026-11-10):** el repositorio de código se trasladó a `E:\Projects\ServerTec`. Las menciones a `E:\PersonalFiles\Projects\ServerTec` en los registros fechados describen el entorno de esas pruebas; para nuevas operaciones Git y comandos se utiliza la ubicación actual. El estado persistente de `D:\Projects\ServerTec` no cambió.
+
 ## 2026-10-19 — Evaluación pública autorizada, sin pagos futuros
 
 La nueva instrucción sustituye la obligación del nombre privado y la preparación
