@@ -176,7 +176,7 @@ Después de Fetch/Pull en GitHub Desktop, seleccionar ServerTec/main y ejecutar
 las pruebas sobre la copia actual. No volver a Inicializar un estado existente.
 
 ```powershell
-Set-Location -LiteralPath 'E:\PersonalFiles\Projects\ServerTec'
+Set-Location -LiteralPath 'E:\Projects\ServerTec'
 powershell -NoProfile -ExecutionPolicy Bypass -File .\ServerTec.ps1 -Accion Pruebas
 powershell -NoProfile -ExecutionPolicy Bypass -File .\ServerTec.ps1 -Accion AutoPrueba
 ```

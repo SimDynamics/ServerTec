@@ -17,7 +17,7 @@ ellos por defecto. No publicar credenciales ni compras en esta etapa.
 
 Detén con Ctrl+C la demo que escucha en 127.0.0.1:443; no mates otros procesos.
 
-    Set-Location -LiteralPath 'E:\PersonalFiles\Projects\ServerTec'
+    Set-Location -LiteralPath 'E:\Projects\ServerTec'
     powershell -NoProfile -ExecutionPolicy Bypass -File .\Demo-Web.ps1 -Accion Pruebas
     powershell -NoProfile -ExecutionPolicy Bypass -File .\Reglas-Demo-Publica.ps1 -Accion Plan
     powershell -NoProfile -ExecutionPolicy Bypass -File .\Reglas-Demo-Publica.ps1 -Accion Verificar
@@ -26,7 +26,7 @@ Si Plan falla, no continúes: puede haber cambiado una IP, interfaz o perfil.
 
 ## Paso 2. Regla Windows (PowerShell como administrador)
 
-    Set-Location -LiteralPath 'E:\PersonalFiles\Projects\ServerTec'
+    Set-Location -LiteralPath 'E:\Projects\ServerTec'
     powershell -NoProfile -ExecutionPolicy Bypass -File .\Reglas-Demo-Publica.ps1 -Accion Aplicar
     powershell -NoProfile -ExecutionPolicy Bypass -File .\Reglas-Demo-Publica.ps1 -Accion Verificar
 
@@ -39,11 +39,11 @@ no permitan otro tráfico; no toca ninguna regla ajena.
 
 En la ventana IPv4:
 
-    powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\PersonalFiles\Projects\ServerTec\Demo-Web.ps1' -Accion Iniciar -Nombre 'servertec-demo.example.invalid' -Directorio 'D:\Projects\ServerTec\demo-web-dynv6-20261019' -Direccion '198.51.100.10' -Puerto 443 -ExposicionAutorizada
+    powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\Projects\ServerTec\Demo-Web.ps1' -Accion Iniciar -Nombre 'servertec-demo.example.invalid' -Directorio 'D:\Projects\ServerTec\demo-web-dynv6-20261019' -Direccion '198.51.100.10' -Puerto 443 -ExposicionAutorizada
 
 En otra ventana IPv6:
 
-    powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\PersonalFiles\Projects\ServerTec\Demo-Web.ps1' -Accion Iniciar -Nombre 'servertec-demo.example.invalid' -Directorio 'D:\Projects\ServerTec\demo-web-dynv6-20261019' -Direccion '2001:db8:feed::10' -Puerto 443 -ExposicionAutorizada
+    powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\Projects\ServerTec\Demo-Web.ps1' -Accion Iniciar -Nombre 'servertec-demo.example.invalid' -Directorio 'D:\Projects\ServerTec\demo-web-dynv6-20261019' -Direccion '2001:db8:feed::10' -Puerto 443 -ExposicionAutorizada
 
 Comprobar:
 
@@ -88,8 +88,8 @@ las protecciones de los visitantes.
 
 Detener solo las dos consolas de la demo con Ctrl+C. En PowerShell administrador:
 
-    powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\PersonalFiles\Projects\ServerTec\Reglas-Demo-Publica.ps1' -Accion Retirar
-    powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\PersonalFiles\Projects\ServerTec\Reglas-Demo-Publica.ps1' -Accion Verificar
+    powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\Projects\ServerTec\Reglas-Demo-Publica.ps1' -Accion Retirar
+    powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\Projects\ServerTec\Reglas-Demo-Publica.ps1' -Accion Verificar
 
 En el router, retirar exclusivamente las reglas NAT y ACL temporales nuevas.
 No ejecutar Inicializar ni tocar D:\Projects\ServerTec\state.

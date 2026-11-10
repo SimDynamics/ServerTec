@@ -66,13 +66,13 @@ ni publicó nada; no se eligió silenciosamente un proveedor o una URL sustituta
 Diagnóstico adicional, ejecutable desde cualquier consola (solo lectura):
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\PersonalFiles\Projects\ServerTec\Diagnostico-Demo-Externa.ps1'
+powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\Projects\ServerTec\Diagnostico-Demo-Externa.ps1'
 ```
 
 Para revisar el alcance de un posible permiso público IPv6, sin aplicarlo:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\PersonalFiles\Projects\ServerTec\Diagnostico-Demo-Externa.ps1' -DireccionServidor '2001:db8:feed::10' -AccesoGeneral
+powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\Projects\ServerTec\Diagnostico-Demo-Externa.ps1' -DireccionServidor '2001:db8:feed::10' -AccesoGeneral
 ```
 
 Produce `RemoteAddress=Any` únicamente como borrador de todas las direcciones de
@@ -109,7 +109,7 @@ saldos compartidos, transacciones, A → B → A y recuperación de corazones ba
 demanda permanecen en el backend original. La demo ni siquiera lo importa.
 
 Las tres rutas candidatas de estado comprobadas no existen en esta PC:
-`D:\Projects\ServerTec\state`, `E:\PersonalFiles\Projects\ServerTec\state` y
+`D:\Projects\ServerTec\state`, `E:\Projects\ServerTec\state` y
 `%LOCALAPPDATA%\ServerTec\state`. **No se inicializó ninguna**, no se abrió una
 SQLite real y no se copiaron bases abiertas, claves ni certificados anteriores.
 
@@ -145,7 +145,7 @@ o ataques de Internet de una aplicación de producción.
 PowerShell normal, dependencias existentes de `.venv`; no instalar nada nuevo:
 
 ```powershell
-Set-Location -LiteralPath 'E:\PersonalFiles\Projects\ServerTec'
+Set-Location -LiteralPath 'E:\Projects\ServerTec'
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Demo-Web.ps1 -Accion Rutas
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Demo-Web.ps1 -Accion Inspeccionar
 ```
@@ -176,7 +176,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Demo-Web.ps1 -Accion Inici
 En otra consola:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\PersonalFiles\Projects\ServerTec\Demo-Web.ps1' -Accion Comprobar
+powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\Projects\ServerTec\Demo-Web.ps1' -Accion Comprobar
 ```
 
 Esta ruta absoluta funciona aunque esa segunda consola empiece en

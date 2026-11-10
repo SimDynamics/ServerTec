@@ -163,9 +163,9 @@ Chrome Windows/Android desde Internet, reinicios públicos ni renovación públi
 Comandos locales de QA, desde cualquier consola:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\PersonalFiles\Projects\ServerTec\Demo-Web.ps1' -Accion Pruebas
-powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\PersonalFiles\Projects\ServerTec\ServerTec.ps1' -Accion AutoPrueba
-powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\PersonalFiles\Projects\ServerTec\Diagnostico-Demo-Externa.ps1'
+powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\Projects\ServerTec\Demo-Web.ps1' -Accion Pruebas
+powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\Projects\ServerTec\ServerTec.ps1' -Accion AutoPrueba
+powershell -NoProfile -ExecutionPolicy Bypass -File 'E:\Projects\ServerTec\Diagnostico-Demo-Externa.ps1'
 ```
 
 El arranque/comprobación de la demo privada conservada sigue en DEMO-WEB.md,

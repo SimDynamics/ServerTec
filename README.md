@@ -13,7 +13,7 @@ documenta la investigación actual: no se ha acreditado una combinación compati
 de nombre, certificado y continuidad; no se integra un servicio provisional.
 No hay publicación pública ni validación externa en Chrome confirmadas.
 
-**Repositorio actual:** `SimDynamics/ServerTec` (público, rama `main`), independiente de `SimDynamics/LearnGraphicsProgramming`. **Copia local:** `E:\PersonalFiles\Projects\ServerTec`. La migración por Git y la retirada de `server/ServerTec` del árbol `main` de la app ya se completaron. El repositorio público de recursos no participa. Claves privadas, certificados y SQLite permanecen fuera del código.
+**Repositorio actual:** `SimDynamics/ServerTec` (público, rama `main`), independiente de `SimDynamics/LearnGraphicsProgramming`. **Copia local:** `E:\Projects\ServerTec`. La migración por Git y la retirada de `server/ServerTec` del árbol `main` de la app ya se completaron. El repositorio público de recursos no participa. Claves privadas, certificados y SQLite permanecen fuera del código.
 
 Esta implementación usa Python 3.13+, FastAPI, Uvicorn, SQLite, cryptography y PyJWT. Son herramientas ejecutadas en tu equipo, sin suscripción de hosting ni cuota de operaciones de un proveedor. **No es el ejemplo previo en ASP.NET/C#: es una implementación Python independiente que se ha podido ejecutar y probar en este entorno.** No es un servicio de FastAPI alojado. La descarga de dependencias usa el registro de paquetes; el servidor no depende de ese registro después de instalarlas.
 
@@ -21,7 +21,7 @@ No se instala nada automáticamente con el diagnóstico. No hay Docker Desktop, 
 
 ## Datos en D y código en E
 
-El código Git permanece en `E:\PersonalFiles\Projects\ServerTec`. El almacenamiento persistente es `D:\Projects\ServerTec`:
+El código Git permanece en `E:\Projects\ServerTec`. El almacenamiento persistente es `D:\Projects\ServerTec`:
 
 * `state`: SQLite, certificados, claves, configuración y credencial de pruebas.
 * `state\backups`: respaldos privados de SQLite y su clave HMAC.
@@ -33,10 +33,10 @@ El código Git permanece en `E:\PersonalFiles\Projects\ServerTec`. El almacenami
 
 ## Primera ejecución en Windows
 
-Tras clonar el repositorio público en `E:\PersonalFiles\Projects\ServerTec`, **las actualizaciones posteriores llegan por Git, no por ZIP**. El usuario recibe las actualizaciones mediante Fetch/Pull en GitHub Desktop, seleccionando ServerTec y main; conservar cualquier cambio local propio. Abrir PowerShell normal, sin administrador:
+Tras clonar el repositorio público en `E:\Projects\ServerTec`, **las actualizaciones posteriores llegan por Git, no por ZIP**. El usuario recibe las actualizaciones mediante Fetch/Pull en GitHub Desktop, seleccionando ServerTec y main; conservar cualquier cambio local propio. Abrir PowerShell normal, sin administrador:
 
 ```powershell
-Set-Location -LiteralPath 'E:\PersonalFiles\Projects\ServerTec'
+Set-Location -LiteralPath 'E:\Projects\ServerTec'
 powershell -NoProfile -ExecutionPolicy Bypass -File .\ServerTec.ps1 -Accion Diagnostico
 ```
 
@@ -61,7 +61,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\ServerTec.ps1 -Accion Inic
 En otra ventana de PowerShell:
 
 ```powershell
-Set-Location -LiteralPath 'E:\PersonalFiles\Projects\ServerTec'
+Set-Location -LiteralPath 'E:\Projects\ServerTec'
 powershell -NoProfile -ExecutionPolicy Bypass -File .\ServerTec.ps1 -Accion Verificar
 ```
 

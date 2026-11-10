@@ -65,7 +65,7 @@ Vuelve a la **misma** consola administrador y ejecuta:
 ```powershell
 pktmon stop
 pktmon etl2pcap $etl --out $pcap
-Set-Location -LiteralPath 'E:\PersonalFiles\Projects\ServerTec'
+Set-Location -LiteralPath 'E:\Projects\ServerTec'
 py -3 .\analizar_handshake.py --pcapng $pcap
 ```
 
@@ -129,7 +129,7 @@ También resume las banderas SYN/SYN-ACK/ACK/FIN/RST sin revelar direcciones.
 Volver a interpretar EXACTAMENTE el mismo archivo local, después de Pull:
 
 ```powershell
-py -3 "E:\PersonalFiles\Projects\ServerTec\analizar_handshake.py" --pcapng "D:\Projects\ServerTec\reports\handshake-20261019-133525\captura.pcapng"
+py -3 "E:\Projects\ServerTec\analizar_handshake.py" --pcapng "D:\Projects\ServerTec\reports\handshake-20261019-133525\captura.pcapng"
 ```
 
 Si los 23 paquetes corresponden únicamente a conexiones iniciadas por la PC,
@@ -164,7 +164,7 @@ Estar en el mismo prefijo no prueba que el paquete pertenezca a esta PC.
 Despues de hacer Pull, ejecutar una sola vez:
 
 ```powershell
-py -3 "E:\PersonalFiles\Projects\ServerTec\analizar_handshake.py" --pcapng "D:\Projects\ServerTec\reports\handshake-20261019-133525\captura.pcapng"
+py -3 "E:\Projects\ServerTec\analizar_handshake.py" --pcapng "D:\Projects\ServerTec\reports\handshake-20261019-133525\captura.pcapng"
 ```
 
 Interpretacion:

@@ -30,7 +30,7 @@ de las credenciales.
 En la PC con ServerTec, despues de hacer Pull de este commit:
 
 ```powershell
-Set-Location -LiteralPath 'E:\PersonalFiles\Projects\ServerTec'
+Set-Location -LiteralPath 'E:\Projects\ServerTec'
 py -3 .\demo_public_probe.py
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Diagnostico-Demo-Externa.ps1
 ```
@@ -79,7 +79,7 @@ La direccion IPv4 LAN del servidor es 198.51.100.10. El puerto TCP 443 NO tenia 
 
 Este cambio de codigo NO abre la red, no toca el backend ni crea certificados en tu PC.
 
-Tras Pull, ejecutar pruebas desde E:\PersonalFiles\Projects\ServerTec:
+Tras Pull, ejecutar pruebas desde E:\Projects\ServerTec:
 
     powershell -NoProfile -ExecutionPolicy Bypass -File .\Demo-Web.ps1 -Accion Pruebas
 
